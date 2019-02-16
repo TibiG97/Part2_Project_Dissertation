@@ -1,0 +1,107 @@
+\begin{document}
+
+\chapter{Preparation}
+
+The Preparation chapter presents the fundamental theory which serves as bases on which the algorithms in this project are developed. It explores the requirement analysis and software engineering strategies such that the project successfully achieves and possibly surpasses the success criteria. All the work described in this chapter is prior to any actual implementation.     
+
+\section{Introduction to Patchy-San}
+
+\section{Introduction to Neural Networks}
+
+\subsection{Artificial Neuron}
+
+\subsection{Multilayer Perceptron}
+
+\subsection{Convolutional Neural Networks}
+
+
+\subsection{}
+
+\subsection{}
+
+\subsection{}
+
+\section{Requirement Analysis}
+
+After performing an extensive inspection into the NN background theory, a decision was to be made regarding how to approach an implementation that satisfies the end goal of the project. Therefore, to build a ML pipeline capable of classifying, renaming and reorganising files in terms of both provenance and content information, a list of necessary steps is presented in Table \ref{Requirements overview}. \bigskip
+
+\begin{longtable}{|p{.50\textwidth}|p{.15\textwidth}|p{.15\textwidth}|p{.15\textwidth}|}
+  \hline
+  \textbf{Requirements}                                        & \textbf{Priority} & \textbf{Risk} & \textbf{Difficulty} \\
+  \hline
+  Dataset understanding and investigation of existing patterns & High              & Low           & Low                 \\
+
+  Receptive fields construction using Patchy-SAN               & High              & Low           & Medium              \\
+
+  CNN implementation                                           & High              & Medium        & High                \\
+
+  Generate synthetic data                                      & Medium            & Medium        & Medium              \\
+
+  Hyperparameter tuning                                        & Medium            & Medium        & Low                 \\
+
+  ML pipeline service time evaluation                          & Medium            & Low           & Low                 \\
+
+  Files renaming and reorganising implementation               & Low               & Low           & Medium              \\
+
+  \hline
+  \caption[Requirements overview]{List of requirements for a successful project implementation, alongside with their risks and difficulties.}
+  \label{Requirements overview}
+\end{longtable} \bigskip
+
+
+\section{Choice of Tools}
+
+\subsection{Programming Languages}
+
+I use Python 3.6.7 as the main programming language for building my project. This choice is sustained by the fact that Python provides an extensive selection of libraries and frameworks that facilitate deep learning algorithms implementation. Moreover, its syntax simplicity and high-quality documentation enhanced my experience throughout the development process. \smallskip
+
+As a secondary programming language, I used Cypher Data Manipulation Language to interact with the original provided data set, which is stored as a graph database in Neo4J.
+
+\subsection{Libraries}
+
+The third-party libraries that were used alongside Python Standard Library are listed in Table \ref{Libraries}. \bigskip
+
+\begin{longtable}{|p{.15\textwidth}|p{.10\textwidth}|p{.60\textwidth}|}
+  \hline
+  \textbf{Library} & \textbf{Version} & \textbf{Description}                                                                                                                                   \\
+  \hline
+  neo4j-driver     & 1.6.2            & Querying Neo4J graph database                                                                                                                          \\
+
+  numpy            & 1.16.0           & Adds support for multi-dimensional arrays and matrices, along with a large collection of high-level mathematical functions to operate on these arrays. \\
+
+  sklearn          & 0.20.2           & Machine learning library                                                                                                                               \\
+
+  nauty            & 0.6.0            & Used for computing automorphism groups of graphs                                                                                                       \\
+
+  matplotlib       & 3.0.2            & Data visualisation                                                                                                                                     \\
+
+
+  \hline
+  \caption[Libraries]{Third-party libraries used within project implementation.}
+  \label{Libraries}
+\end{longtable} \bigskip
+
+\subsection{Development Environment}
+
+Implementation, testing and evaluation of the project were performed on my personal machine (i7-6700HQ CPU 2.60GHz, 16GB RAM, 512GB SSD,  Ubuntu 18.04 LTS). Additionally, more resource intensive evaluations were carried out on GPUs provided by the Computer Laboratory Department. In terms of IDEs, I chose \textbf{PyCharm} due to its version control integration, on-the-fly error checking, debugging capabilities, flexibility and easy project navigation. \smallskip
+
+To avoid possible issues created by either hardware/software failures or user errors, I had to place emphasis on adequately choosing backup strategies for my project. Thus, the git repository of the project was synchronised with \textbf{GitHub} online hosting service. The code was also occasionally updated on my Google Drive file space and on an external HDD. \\
+
+\section{Starting Point}
+
+I have started this project only having programming experience in C/C++ and Java. Thus, transition to Python was not problematic, as I had already covered fundamental concepts such as object-oriented and procedural programming. However, the more complicated stage was getting acquainted to the high-level NN APIs in Python. I needed to understand how to build NNs using off-the-shelf implementations for various layers, how to train, evaluate and optimise them. \smallskip
+
+Moreover, I had only primary knowledge of machine learning. Part IA Machine Learning and Real World Data introduced the ideas of supervised learning and diverse evaluation metrics and strategies. However, additional preparation was needed to learn how NNs work, how to design their architecture, which regularisation techniques to use and what types would be most suitable for the project. \\
+
+\section{Software Engineering Techniques}
+
+Since all the requirements were clearly defined and understood, and also given the scale of the project, I decided to adopt the Iterative Development Model. Respecting the concepts behind this software engineering model, I split my project into several modules that at first offer core functionality and are afterwards iteratively refined. The three indicated modules 
+consist of: database interaction module, machine learning pipeline module and a virtual filespace in which files are renamed and reorganised. \smallskip
+
+Unit and integration testing were performed using (smaller) synthetically generated datasets. The datasets' generation tool gives the user full control over the way in which properties are generated and thus I could create similar patters to those in the original provenance graphs. \\ 
+
+\section{Summary}
+
+In this chapter, I introduced the neural networks background theory that supports the machine learning models built in the project, followed by analysing the requirements for achieving the success criteria and a brief description of the development environment and backup strategies. Furthermore, a software engineering model that describes how the project was step-by-step implemented and evaluated was also discussed. \\
+
+\end{document}
