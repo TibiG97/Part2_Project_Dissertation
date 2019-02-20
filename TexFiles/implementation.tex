@@ -1,57 +1,116 @@
 \begin{document}
-    
-    \chapter{Implementation}
-    
-    \section{Overall Structure of the Project}
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[scale=1]{Images/nested_cv.png}
-        \caption{Caption}
-        \label{NestedCV}
-    \end{figure}
-    
-    \section{Data Analysis and Processing}
-    
-        \subsection{}
-        
-        \subsection{Neo4J Interaction}
-        
-        
-    \section{Patchy-San}
-    
-    \subsection{}
-    
-    \subsection{}
-    
-    \subsection{}
-    
-    \subsection{}
-    
-    \section{Convolutional Neural Network}
-    
-    \section{Regularisation Techniques}
-    
-    \subsection{Dropout}
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[scale=0.45]{Images/beforedrp.png}
-        \caption{Caption}
-        \label{fig:my_label}
-    \end{figure}
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[scale=0.45]{Images/afterdrp.png}
-        \caption{Caption}
-        \label{fig:my_label}
-    \end{figure}
-    
-    \section{Renaming the Files}
-    
-    \section{Building a Virtual File System}
-    
-    
-    \section{Summary}
+
+\chapter{Implementation}
+
+\section{Overall Structure of the Project}
+
+\subsection{Nested Cross-Validation}
+
+The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. Dealing with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV). A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
+
+\begin{itemize}[label={}]
+  \item 1. divide the dataset into K stratified cross-validation folds at random
+  \item 2. for each fold $k$ = 1,2,...,K (outer loop for evaluation of the model with selected hyperparameter):
+        \begin{itemize}[label={}]
+          \item 2.1. let fold $k$ be the outer test set
+          \item 2.2. let all data except for fold $k$ be the outer training set
+          \item 2.3. randomly split training set into L stratified fold
+          \item 2.4. for each fold $l$ = 1,2,...,L (inner loop for hyperparameter tuning):
+                \begin{itemize}[label={}]
+                  \item 2.4.1. let fold $l$ be the inner validation set
+                  \item 2.4.2. let all data except fold $k$ and fold $l$ be the inner training set
+                  \item 2.4.3. train with each hyperparameter on inner training set and evaluate on fold $l$, keeping track of performance metrics
+                \end{itemize}
+          \item 2.5. for each hyperparameter setting, calculate average metrics score over the L folds and choose the best one
+          \item 2.6. train a model with the best hyperparameter on fold $k$, evaluate its performance and save its score
+        \end{itemize}
+  \item 3. calculate the mean score over all K folds and report as the generalisation error
+\end{itemize} \bigskip
+
+An outer CV procedure is performed to provide a performance estimate used to select the optimal model. In each fold of the outer CV, the hyperparameters of the model are tuned independently to minimise an inner CV estimate of generalisation performance. The outer CV is then essentially estimating the performance of a method for fitting a model, CV based hyperparameter tuning. This eliminates the bias introduced by a flat CV procedure as the test data in each iteration of the outer CV has not been used to optimise the performance of the model in any way, and may therefore provide a more reliable criterion for choosing the best model. Another advantage consists of tuning and evaluating on the entire dataset, instead of completely discarding the validation set. The computational expense of nested CV, however, is substantially higher. \\
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.95]{Images/nested_cv.png}
+  \caption{Structure of a Nested Cross-Validation used for both model evaluation and hyperparameter tuning.}
+  \label{NestedCV}
+\end{figure}
+
+\section{Data Analysis and Processing}
+
+\subsection{}
+
+\subsection{Neo4J Interaction}
+
+
+\section{Patchy-San}
+
+\subsection{}
+
+\subsection{}
+
+\subsection{}
+
+\subsection{}
+
+\section{Convolutional Neural Network}
+
+\section{Regularisation Techniques}
+
+Deep NNs can be trained to develop complex relationships between their input data and their outcome. Depending on the amount of training data the network may develop a behaviour that brings good results for the training data, but fails as soon as unknown test data is fed into the network. To prevent overfitting in neural networks, there exist a variety of methods. A couple of them were implemented and are discussed in this section.
+
+\subsection{Dropout}
+
+Dropout is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
+
+One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $p$ during training, the outgoing weights of that unit are multiplied by $p$ at test
+time. Another approach is to re-scale weights at training time instead, after each weight update at the end of the mini-batch. This is sometimes called inverse dropout and is the way both Keras and Pytorch deep learning libraries implement it. \\
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.35]{Images/beforedrp.png}
+
+  \bigskip
+
+  \bigskip
+
+  \includegraphics[scale=0.35]{Images/afterdrp.png}
+
+  \bigskip
+
+  \caption{Neural Network before (upper image) and after (lower image) dropout.}
+  \label{dropout}
+\end{figure}
+
+\subsection{Batch Normalisation}
+
+One of the key motivations for the development of Batch Normalisation was the reduction of so-called internal covariate shift (ICS). ICS is the phenomenon wherein the distribution of inputs to a layer in the NN changes due to an update of parameters in the previous layers. This change leads to a constant shift of the underlying training problem and is thus believe to have detrimental effect on the training process. \\
+
+Therefore, Batch Normalisation is a mechanism that aims to stabilise the distribution (over a mini-batch) of inputs \{$x_1$, $x_2$, ... , $x_n$\} to a given NN during training. This is achieved by augmenting the NN with additional layers that set the first two moments: mean - $\mu = \frac{1}{n} \sum_{i=1}^n x_i$ and variance - $\sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n (x_i - \mu) ^ 2}$, of the distribution of each activation to be zero and one respectively. Thus, it normalises the inputs in the following manner: \\
+
+\begin{equation}
+    \centering
+    \hat{x}_k = \frac{x_k - \mu}{\sqrt{\sigma + \epsilon}} 
+\end{equation}
+
+where $\epsilon > 0$ is a small constant added to avoid division by 0. \\
+
+Then, the batch normalised inputs are also typically scaled and shifted based on trainable parameters $\gamma$ and $\beta$ to preserve model expressivity. \\
+
+\begin{equation}
+    \centering
+    y_k = \gamma_k * \hat{x}_k + \beta_k
+\end{equation}
+
+
+
+\section{Renaming the Files}
+
+\section{Building a Virtual File System}
+
+
+\section{Summary}   
 \end{document}
