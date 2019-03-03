@@ -2,10 +2,11 @@
 
 \chapter{Implementation}
 
+In this chapter I will discuss how this project is structured, going through the high-level details of the actual implementation that respects all the requirements defined in Section \ref{Requirement Analysis}. It will review how the initial data is processed and how the extracted features of interest are used with a view to creating further synthetic and real datasets. Furthermore, the chapter examines how the Patchy-San algorithm operates on graph inputs in order to create suitable NNs training data and thus, how the NNs architectures are designed and optimised for the given classification task. Finally, the way in which files are renamed and reorganised into a virtual filesystem are also explained. \\
+
 \section{Overall Structure of the Project}
 
 \subsection{Nested Cross-Validation}
-
 The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. Dealing with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV). A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
 
 \begin{itemize}[label={}]
@@ -40,22 +41,48 @@ An outer CV procedure is performed to provide a performance estimate used to sel
 
 \section{Data Analysis and Processing}
 
-\subsection{}
+\subsection{Synthetic Data Generation} \label{synthetic data generation}
 
-\subsection{Neo4J Interaction}
+\subsection{Neo4J Interaction and Feature Extraction}
 
 
 \section{Patchy-San}
 
-\subsection{}
+Patchy-San aims to bring CNNs to bear on a large-class of graph based learning problems. This novel algorithm consists of a general approach of extracting locally connected regions from graphs and model them in such a way so that they become a suitable input for a CNN. In this context, suitable refers to both structurally adequate and having the capability of preserving graph's expressivity, in the sense that local pattern information is not lost when linearising the set of features. \\
 
-\subsection{}
+My re-implementation brings a few adjustments and extensions (mentioned in the upcoming sections) to the original algorithm so that it suits better the shape and properties of the dataset provided. \\
 
-\subsection{}
+\subsection{Node Sequence Selection}
 
-\subsection{}
+The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can be using the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
+
+Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
+
+\subsection{Neighbourhood Assembly}
+
+The next stage involves assembling a local neighbourhood for each root previously determined. This is accomplished by using a standard breath-first search algorithm. Thus, I explore vertices with an increasing distance from the root, adding them to a set N. If the number of collected nodes is smaller than a pre-established number $k$, I continue exploring the immediate neighbours of the latest nodes added to the set until either $k$ nodes are found, or there are no more neighbours. In the latter case, for padding purposes, dummy nodes, having dummy attributes are added. This helps not throwing away information that might convey in-graph patters. However, it introduces the risk of misidentifying the padding nodes as a pattern themselves. \\
+
+One final remark for the neighbourhood assembly procedure is that the order in which the immediate neighbours of a node are explored is with respect to, once again, the timestamp of each influence edge. Specifically, newer system activities will be considered with priority, also ensuring that the procedure is consistent and always gives the same output for the same graph. \\
+
+\subsection{Receptive Field Normalisation}
+
+The receptive field of a node is built by normalising the neighbourhood assembled in the previous step. The normalisation imposes an order on the nodes of the neighbourhood graph so as to map from the unordered graph space to a vector space with a linear order. This time, the graph labelling procedure is way more difficult to compute, as appropriate choosing it is at the core of the representation that Patchy-San proposes, hence the performance of the classification pipeline will highly depend on it. \\
+
+The basic idea is that the graph labelling procedure should assign nodes of two different graphs in similar positions if and only if they have similar structural roles in the graphs. The labelling of the vertices is therefore constrained by the graph distance to the root node $v$. For any two vertices $u$, $w$, if $u$ is closer to $v$ than $w$, then $v$ is
+always ranked higher than $w$. This definition, illustrated in Figure \ref{Normalisation} ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
+
+\begin{figure}
+  \centering
+  % \includegraphics{}
+  \caption{Caption}
+  \label{Normalisation}
+\end{figure}
+
+One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary.
 
 \section{Convolutional Neural Network}
+
+For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
 
 \section{Regularisation Techniques}
 
@@ -92,8 +119,8 @@ One of the key motivations for the development of Batch Normalisation was the re
 Therefore, Batch Normalisation is a mechanism that aims to stabilise the distribution (over a mini-batch) of inputs \{$x_1$, $x_2$, ... , $x_n$\} to a given NN during training. This is achieved by augmenting the NN with additional layers that set the first two moments: mean - $\mu = \frac{1}{n} \sum_{i=1}^n x_i$ and variance - $\sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n (x_i - \mu) ^ 2}$, of the distribution of each activation to be zero and one respectively. Thus, it normalises the inputs in the following manner: \\
 
 \begin{equation}
-    \centering
-    \hat{x}_k = \frac{x_k - \mu}{\sqrt{\sigma + \epsilon}} 
+  \centering
+  \hat{x}_k = \frac{x_k - \mu}{\sqrt{\sigma + \epsilon}}
 \end{equation}
 
 where $\epsilon > 0$ is a small constant added to avoid division by 0. \\
@@ -101,8 +128,8 @@ where $\epsilon > 0$ is a small constant added to avoid division by 0. \\
 Then, the batch normalised inputs are also typically scaled and shifted based on trainable parameters $\gamma$ and $\beta$ to preserve model expressivity. \\
 
 \begin{equation}
-    \centering
-    y_k = \gamma_k * \hat{x}_k + \beta_k
+  \centering
+  y_k = \gamma_k * \hat{x}_k + \beta_k
 \end{equation}
 
 
@@ -112,5 +139,7 @@ Then, the batch normalised inputs are also typically scaled and shifted based on
 \section{Building a Virtual File System}
 
 
-\section{Summary}   
+\section{Summary}
+
+
 \end{document}

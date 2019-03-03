@@ -90,7 +90,7 @@ Pooling is a procedure that reduces the input over a certain area to a single va
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.3]{Images/pooling.png}
-  \caption{Example of Pooling operation with 2 by 2 kernel size and stride 2.}
+  \caption{Example of Max Pooling operation with 2 by 2 kernel size and stride 2.}
   \label{Pooling}
 \end{figure}
 
@@ -98,7 +98,7 @@ Pooling is a procedure that reduces the input over a certain area to a single va
 
 After several convolution and pooling layers, the CNN usually ends with multiple fully connected layers. The output from the convolutional and pooling layers represent high-level features of the input image. The purpose of the dense layers is to use these flattened features for classifying the input image into various classes based on the training dataset. \\
 
-\subsection{Supervised learning using Neural Networks}
+\subsection{Supervised Learning using Neural Networks}
 
 As the main goal of the project is a classification task, in this section I will present how NNs can be used to achieve this and the mathematical background behind training and predicting stages. \\\
 
@@ -147,7 +147,9 @@ A trained model used on unseen data returns a prediction y. This can be used to 
   c = \argmax_{c \in \{ c_1, c_2, ..., c_k\}} \ \mathbb{P}(\mathbf{x} \ \text{in class} \ c_i) = \argmax_{i \in \{ 1, 2, ..., k\}} \ y_i
 \end{equation}
 
-\section{Requirement Analysis}
+\smallskip
+
+\section{Requirement Analysis} \label{Requirement Analysis}
 
 After performing an extensive inspection into the NN background theory, a decision was to be made regarding how to approach an implementation that satisfies the end goal of the project. Therefore, to build a ML pipeline capable of classifying, renaming and reorganising files in terms of both provenance and content information, a list of necessary steps is presented in Table \ref{Requirements overview}. \bigskip
 
@@ -163,11 +165,11 @@ After performing an extensive inspection into the NN background theory, a decisi
 
   Generate synthetic data                                      & Medium            & Medium        & Medium              \\
 
-  Hyperparameter tuning                                        & Medium            & Medium        & High                 \\
+  Hyperparameter tuning                                        & Medium            & Medium        & High                \\
 
-  ML pipeline service time evaluation                          & Medium            & Medium           & Medium                 \\
+  ML pipeline service time evaluation                          & Medium            & Medium        & Medium              \\
 
-  Files renaming and reorganising implementation               & Low               & Medium           & Medium              \\
+  Files renaming and reorganising implementation               & Low               & Medium        & Medium              \\
 
   \hline
   \caption[Requirements overview]{List of requirements for a successful project implementation, alongside with their risks and difficulties.}
@@ -197,6 +199,7 @@ The third-party libraries that were used alongside Python Standard Library are l
 
   sklearn          & 0.20.2           & Machine learning library                                                                                                                              \\
 
+  networkx         & 2.2              & Used for for the creation, manipulation, and study of the structure, dynamics, and functions of complex networks                                      \\
   nauty            & 0.6.0            & Used for computing automorphism groups of graphs                                                                                                      \\
 
   matplotlib       & 3.0.2            & Data visualisation                                                                                                                                    \\
