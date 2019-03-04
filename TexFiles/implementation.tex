@@ -58,11 +58,26 @@ The first step in the algorithm consists of establishing a node ordering for the
 
 Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{Images/nodeseqsel.png}
+  \caption{Input graph node's sorted with respect to the labelling function. $w$ root nodes selected within stride $s$.}
+  \label{nodeseqsel}
+\end{figure}
+
 \subsection{Neighbourhood Assembly}
 
 The next stage involves assembling a local neighbourhood for each root previously determined. This is accomplished by using a standard breath-first search algorithm. Thus, I explore vertices with an increasing distance from the root, adding them to a set N. If the number of collected nodes is smaller than a pre-established number $k$, I continue exploring the immediate neighbours of the latest nodes added to the set until either $k$ nodes are found, or there are no more neighbours. In the latter case, for padding purposes, dummy nodes, having dummy attributes are added. This helps not throwing away information that might convey in-graph patters. However, it introduces the risk of misidentifying the padding nodes as a pattern themselves. \\
 
 One final remark for the neighbourhood assembly procedure is that the order in which the immediate neighbours of a node are explored is with respect to, once again, the timestamp of each influence edge. Specifically, newer system activities will be considered with priority, also ensuring that the procedure is consistent and always gives the same output for the same graph. \\
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.55]{Images/neighassemb.png}
+  \caption{Illustration of a Breath-First Search used for computing a neighbourhood.}
+  \label{neighassemb}
+\end{figure}
+
 
 \subsection{Receptive Field Normalisation}
 
@@ -71,11 +86,11 @@ The receptive field of a node is built by normalising the neighbourhood assemble
 The basic idea is that the graph labelling procedure should assign nodes of two different graphs in similar positions if and only if they have similar structural roles in the graphs. The labelling of the vertices is therefore constrained by the graph distance to the root node $v$. For any two vertices $u$, $w$, if $u$ is closer to $v$ than $w$, then $v$ is
 always ranked higher than $w$. This definition, illustrated in Figure \ref{Normalisation} ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
 
-\begin{figure}
+\begin{figure}[H]
   \centering
-  % \includegraphics{}
-  \caption{Caption}
-  \label{Normalisation}
+  \includegraphics[scale=0.55]{Images/normalisation.png}
+  \caption{Receptive Field Normalisation from previously selected neighbourhood. Nodes having the same colour have the same rank with respect to root in the liniarisation, while numbers illustrate tie-breakers.}
+  \label{normalisation}
 \end{figure}
 
 One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary.
