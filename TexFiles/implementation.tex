@@ -4,9 +4,26 @@
 
 In this chapter I will discuss how this project is structured, going through the high-level details of the actual implementation that respects all the requirements defined in Section \ref{Requirement Analysis}. It will review how the initial data is processed and how the extracted features of interest are used with a view to creating further synthetic and real datasets. Furthermore, the chapter examines how the Patchy-San algorithm operates on graph inputs in order to create suitable NNs training data and thus, how the NNs architectures are designed and optimised for the given classification task. Finally, the way in which files are renamed and reorganised into a virtual filesystem are also explained. \\
 
+
+\section{Data Analysis and Processing}
+
+\subsection{Data Properties}
+
+\subsection{Neo4J Interaction and Feature Extraction}
+
+\subsection{Feature Engineering}
+
+\subsection{Provenance Data Generation}
+
+\subsection{Synthetic Data Generation} \label{synthetic data generation}
+
+
 \section{Overall Structure of the Project}
 
+\subsection{Overview of the Renaming Pipeline}
+
 \subsection{Nested Cross-Validation}
+
 The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. Dealing with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV). A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
 
 \begin{itemize}[label={}]
@@ -39,12 +56,6 @@ An outer CV procedure is performed to provide a performance estimate used to sel
   \label{NestedCV}
 \end{figure}
 
-\section{Data Analysis and Processing}
-
-\subsection{Synthetic Data Generation} \label{synthetic data generation}
-
-\subsection{Neo4J Interaction and Feature Extraction}
-
 
 \section{Patchy-San}
 
@@ -73,7 +84,7 @@ One final remark for the neighbourhood assembly procedure is that the order in w
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.55]{Images/neighassemb.png}
+  \includegraphics[scale=0.375]{Images/neighassemb2.png}
   \caption{Illustration of a Breath-First Search used for computing a neighbourhood.}
   \label{neighassemb}
 \end{figure}
@@ -81,10 +92,10 @@ One final remark for the neighbourhood assembly procedure is that the order in w
 
 \subsection{Receptive Field Normalisation}
 
-The receptive field of a node is built by normalising the neighbourhood assembled in the previous step. The normalisation imposes an order on the nodes of the neighbourhood graph so as to map from the unordered graph space to a vector space with a linear order. This time, the graph labelling procedure is way more difficult to compute, as appropriate choosing it is at the core of the representation that Patchy-San proposes, hence the performance of the classification pipeline will highly depend on it. \\
+The receptive field of a node is built by normalising the neighbourhood assembled in the previous step. The normalisation imposes an order on the nodes of the neighbourhood graph so as to map from the unordered graph space to a vector space with a linear order. This time, the graph labelling procedure is way more difficult to compute, as appropriately choosing it is at the core of the representation that Patchy-San proposes. Hence the performance of the classification pipeline will highly depend on the labelling procedure. \\
 
 The basic idea is that the graph labelling procedure should assign nodes of two different graphs in similar positions if and only if they have similar structural roles in the graphs. The labelling of the vertices is therefore constrained by the graph distance to the root node $v$. For any two vertices $u$, $w$, if $u$ is closer to $v$ than $w$, then $v$ is
-always ranked higher than $w$. This definition, illustrated in Figure \ref{Normalisation} ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
+always ranked higher than $w$. This definition, illustrated in Figure \ref{normalisation}, ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
 
 \begin{figure}[H]
   \centering
