@@ -2,29 +2,48 @@
 
 \chapter{Implementation}
 
-In this chapter I will discuss how this project is structured, going through the high-level details of the actual implementation that respects all the requirements defined in Section \ref{Requirement Analysis}. It will review how the initial data is processed and how the extracted features of interest are used with a view to creating further synthetic and real datasets. Furthermore, the chapter examines how the Patchy-San algorithm operates on graph inputs in order to create suitable NNs training data and thus, how the NNs architectures are designed and optimised for the given classification task. Finally, the way in which files are renamed and reorganised into a virtual filesystem are also explained. \\
+In this chapter I will discuss how this project is structured, going through the high-level details of the actual implementation that respects all the requirements defined in Section \ref{Requirement Analysis}. It will review how the initial data is processed and how the extracted features of interest are used with a view to creating further synthetic and real datasets. Furthermore, the chapter examines how the Patchy-San algorithm operates on graph inputs in order to create suitable NNs training data and thus, how the NNs architectures are designed and optimised for the given classification task. Finally, the way in which files are renamed and reorganised into a virtual filesystem are analysed. \\
 
 
 \section{Data Analysis and Processing}
 
 \subsection{Data Properties}
 
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale = 0.86]{Images/nodedegdist.png}}
+  \caption{Node degree distribution in Neo4J database.}
+  \label{nodedegdist}
+\end{figure}
+
 \subsection{Neo4J Interaction and Feature Extraction}
 
 \subsection{Feature Engineering}
-
-\subsection{Provenance Data Generation}
 
 \subsection{Synthetic Data Generation} \label{synthetic data generation}
 
 
 \section{Overall Structure of the Project}
 
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale = 0.6]{Images/pipeline.png}}
+  \caption{Overview of the implemented ML pipeline.}
+  \label{pipeline}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale = 0.7]{Images/uml.png}}
+  \caption{UML diagram illustrating the inheritance of implemented classifiers.}
+  \label{OOP}
+\end{figure}
+
 \subsection{Overview of the Renaming Pipeline}
 
 \subsection{Nested Cross-Validation}
 
-The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. Dealing with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV). A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
+The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. In order to deal with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV) procedure. A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
 
 \begin{itemize}[label={}]
   \item 1. divide the dataset into K stratified cross-validation folds at random
@@ -45,7 +64,7 @@ The fundamental success criteria of the project were to develop, tune and evalua
   \item 3. calculate the mean score over all K folds and report as the generalisation error
 \end{itemize} \bigskip
 
-An outer CV procedure is performed to provide a performance estimate used to select the optimal model. In each fold of the outer CV, the hyperparameters of the model are tuned independently to minimise an inner CV estimate of generalisation performance. The outer CV is then essentially estimating the performance of a method for fitting a model, CV based hyperparameter tuning. This eliminates the bias introduced by a flat CV procedure as the test data in each iteration of the outer CV has not been used to optimise the performance of the model in any way, and may therefore provide a more reliable criterion for choosing the best model. Another advantage consists of tuning and evaluating on the entire dataset, instead of completely discarding the validation set. The computational expense of nested CV, however, is substantially higher. \\
+An outer CV procedure is performed to provide a performance estimate used to select the optimal model. In each fold of the outer CV, the hyperparameters of the model are tuned independently to maximise an inner CV estimate of generalisation performance. The outer CV is then essentially estimating the performance of a method for fitting a model, CV based hyperparameter tuning. This eliminates the bias introduced by a flat CV procedure as the test data in each iteration of the outer CV has not been used to optimise the performance of the model in any way, and may therefore provide a more reliable criterion for choosing the best model. Another advantage consists of tuning and evaluating on the entire dataset, instead of completely discarding the validation set. The computational expense of nested CV, however, is substantially higher. \\
 
 
 
@@ -65,7 +84,7 @@ My re-implementation brings a few adjustments and extensions (mentioned in the u
 
 \subsection{Node Sequence Selection}
 
-The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can be using the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
+The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can use the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
 
 Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
 
@@ -110,6 +129,20 @@ One important detail that was taken into account is that, in general, the descri
 
 For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
 
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.6]{Images/cnn_layers.png}}
+  \caption{Diagram illustrating the configuration of hidden and output layers of the CNN.}
+  \label{cnn_layers}
+\end{figure}
+
+     \begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.6]{Images/mlp_layers.png}}
+  \caption{Diagram illustrating the configuration of hidden and output layers of the MLP.}
+  \label{mlp_layers}
+    \end{figure}
+
 \section{Regularisation Techniques}
 
 Deep NNs can be trained to develop complex relationships between their input data and their outcome. Depending on the amount of training data the network may develop a behaviour that brings good results for the training data, but fails as soon as unknown test data is fed into the network. To prevent overfitting in neural networks, there exist a variety of methods. A couple of them were implemented and are discussed in this section.
@@ -118,7 +151,7 @@ Deep NNs can be trained to develop complex relationships between their input dat
 
 Dropout is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
 
-One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $p$ during training, the outgoing weights of that unit are multiplied by $p$ at test
+One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $k_p$ during training, the outgoing weights of that unit are multiplied by $p$ at test
 time. Another approach is to re-scale weights at training time instead, after each weight update at the end of the mini-batch. This is sometimes called inverse dropout and is the way both Keras and Pytorch deep learning libraries implement it. \\
 
 
@@ -140,6 +173,7 @@ time. Another approach is to re-scale weights at training time instead, after ea
 
 \subsection{Batch Normalisation}
 
+
 One of the key motivations for the development of Batch Normalisation was the reduction of so-called internal covariate shift (ICS). ICS is the phenomenon wherein the distribution of inputs to a layer in the NN changes due to an update of parameters in the previous layers. This change leads to a constant shift of the underlying training problem and is thus believe to have detrimental effect on the training process. \\
 
 Therefore, Batch Normalisation is a mechanism that aims to stabilise the distribution (over a mini-batch) of inputs \{$x_1$, $x_2$, ... , $x_n$\} to a given NN during training. This is achieved by augmenting the NN with additional layers that set the first two moments: mean - $\mu = \frac{1}{n} \sum_{i=1}^n x_i$ and variance - $\sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n (x_i - \mu) ^ 2}$, of the distribution of each activation to be zero and one respectively. Thus, it normalises the inputs in the following manner: \\
@@ -158,6 +192,7 @@ Then, the batch normalised inputs are also typically scaled and shifted based on
   y_k = \gamma_k * \hat{x}_k + \beta_k
 \end{equation}
 
+\subsection{Weight Decay}
 
 
 \section{Renaming the Files}

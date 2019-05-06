@@ -33,6 +33,13 @@
 \usepackage{colortbl}
 \usepackage{hhline}
 \usepackage{enumitem}
+\usepackage{tikz}
+
+\newcommand{\greencheck}{}%
+\DeclareRobustCommand{\greencheck}{%
+  \tikz\fill[scale=0.4, color=green]
+  (0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;%
+}
 
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}

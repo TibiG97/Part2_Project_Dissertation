@@ -2,17 +2,29 @@
 
     \chapter{Evaluation}
     
+    This chapter revisits the success criteria, explaining how they were achieved and exceeded. It firstly introduces popular methodologies for evaluating classification models and then presents and discusses the results obtained on synthetically generated datasets (defined in Section ...). Moreover, how a comparative analysis between the implemented models is conducted, is explained in Section ... . Finally, timing performances of the main pipeline, in simulated real-world conditions, are presented. \\
+    
     \section{Success Criteria}
     
-    The initial success criteria for a core implementation of the project were defined in the original Project Proposal and are listed below: \\
+    The initial success criteria for a core implementation of the project were defined in the original Project Proposal and are also listed below: 
     
     \begin{itemize}
-        \item \textit{develop and optimise a machine learning pipeline that can use both provenance data and content data in order to do the file classification}. \\
+        \item \textit{develop and optimise a machine learning pipeline that can use both provenance data and content data in order to do the file classification}. \greencheck
         
-        \item \textit{perform a quantitative evaluation of the implemented architecture(s) and investigate the best trade-off of precision and recall}. \\ 
+        \item \textit{perform a quantitative evaluation of the implemented architecture(s) and investigate the best trade-off of precision and recall}. \greencheck
         
-        \item \textit{investigate the performance of the implemented pipeline in terms of time and space requirements}. \\
+        \item \textit{investigate the performance of the implemented pipeline in terms of time and space requirements}. \greencheck
+    
+    \end{itemize}
         
+    Additionally, a couple of extensions have been implemented, improving the perspective this project gives on the actual performance of the main pipeline: 
+    
+    \begin{itemize}
+        \item \textit{make us of and tune 3 additional off-the-shelf implementations of multiclass classifiers: KNeighbours, Random Forest, Logistic Regression.} \greencheck
+        
+        \item \textit{implement and tune one additional NN model: Multilayer Perceptron.} \greencheck
+        
+        \item \textit{perform a comparative analysis between the implemented models, using the off-the-shelf implementations as baselines for the NNs.} \greencheck
     \end{itemize}
     
     
@@ -61,7 +73,7 @@
         \label{5classmatrix}
     \end{figure}
     
-    Let TP$_i$, TN$_i$, FP$_i$, FN$_i$ be the number of true positives, true negatives, false positives and false negatives when class $i$ is regarded as the positive class. Moreover, let Metric$_i$ be the value of an evaluation metric when class $i$ is regarded as the positive class, where Metric is one of Precision, Recall, F1 score, MCC (note that Accuracy can be computed as before i.e. $ \frac{\text{number of corect predictions}}{\text{total number of predictions made}}$). Thus, Metric$_i$ is computed using TP$_i$, TN$_i$, FP$_i$, FN$_i$ as inputs. Given these definitions, there are two approaches to average the class specific metrics in order to obtain the metrics used for evaluating multiclass classifiers: \\
+    Let TP$_i$, TN$_i$, FP$_i$, FN$_i$ be the number of true positives, true negatives, false positives and false negatives when class $i$ is regarded as the positive class. Moreover, let Metric$_i$ be the value of an evaluation metric when class $i$ is regarded as the positive class, where Metric is one of Precision, Recall, F1 score, MCC (note that Accuracy will still be computed as before i.e. $ \frac{\text{number of corect predictions}}{\text{total number of predictions made}}$). Thus, Metric$_i$ is computed using TP$_i$, TN$_i$, FP$_i$, FN$_i$ as inputs. Given these definitions, there are two approaches to average the class specific metrics in order to obtain the metrics used for evaluating multiclass classifiers: \\
     
     \begin{itemize}
         \item \textbf{Micro Averaging}: \\
@@ -85,9 +97,9 @@
     \end{equation}    
     i.e. the test declares no difference, where there really is one. \\
     
-    I opted for the permutation test as it is known to have higher power than the, perhaps more popular, sign test \cite{signtest}. The core assumption of the permutation test is that if the measured difference \textit{d} in mean M between systems A and B is a fluke, i.e., if there is no real difference between them (because they come from one and the same distribution), it should not matter how many times one randomly swaps the two results. Consider \textit{n} paired results of System A and B. There are 2$^n$ ways of flipping or not flipping the n pairs of results, i.e., 2$^n$ permutations. These permutations operate row-wise. In other words, we create resamplings of these permutations in the following way: for each paired observation in the original runs, $a_i$ and $b_i$, a coin is flipped. If it comes up heads, then swap the score for $b_i$ with $a_i$. Otherwise, leave the pair unchanged. Now calculate the means M of the two system under this permutation, calculate their difference in means, and then do it 2$^n$ times for all permutations. Count how many of the 2$^n$ differences are as high as the difference in the unpermuted version. Call this number S. \\
+    I opted for the permutation test as it is known to have higher significance power than the, perhaps more popular, sign test \cite{signtest}. The core assumption of the permutation test is that if the measured difference \textit{d} in mean M between systems A and B is an incident, i.e., if there is no real difference between them (because they come from one and the same distribution), it should not matter how many times one randomly swaps the two results. Consider \textit{n} paired results of System A and B. There are 2$^n$ ways of flipping or not flipping the n pairs of results, i.e., 2$^n$ permutations. These permutations operate row-wise. In other words, we create resamplings of these permutations in the following way: for each paired observation in the original runs, $a_i$ and $b_i$, a coin is flipped. If it comes up heads, then swap the score for $b_i$ with $a_i$. Otherwise, leave the pair unchanged. Now calculate the means M of the two system under this permutation, calculate their difference in means, and then do it 2$^n$ times for all permutations. Count how many of the 2$^n$ differences are as high as the difference in the unpermuted version. Call this number S. \\
     
-    Finally, if due to a high number \textit{n} you cannot do all exponentially many resamplings, then a large enough random subset of cardinality R should be tested. This version of the test is called \textbf{Monte Carlo Permutation Test}. The probability of observing the difference between the original runs by chance approximated by: \\
+    Finally, if due to a high number \textit{n}, the exponentially many resamplings computation is not feasible, then a large enough random subset of cardinality R should be tested. This version of the test is called \textbf{Monte Carlo Permutation Test}. The probability of observing the difference between the original runs by chance is approximated by: \\
     
     \begin{equation}
         p = \cfrac{S + 1}{R + 1}
@@ -100,7 +112,49 @@
     \subsection{ML Pipeline Time and Space Performance Metrics}
     
     \section{Evaluation Results and Discussions} \label{Evaluation Results}
+
+    \begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.55]{Images/inter_hist_deph_acc.png}}
+  \caption{ Figure showing accuracy scores for various values of $ID$ keeping $HD = 1$ (LHS) and 
+            accuracy for various values of $HD$ keeping $ID = 1$ (RHS).}
+  \label{inter_hist_depth_acc}
+    \end{figure}
     
-    \section{Summary}
+      \begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.7]{Images/l2_dist.png}}
+  \caption{ Figure showing accuracy scores for various values of maximum $L2_{distance}$ for $ID = 3$ and $HD = 4$.}
+  \label{l2_dist}
+    \end{figure}
     
+    \begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.8]{Images/acc_per_fold.png}}
+  \caption{Comparative accuracy scores for all implemented models per fold.}
+  \label{acc_per_fold}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.8]{Images/macro_mcc_per_fold.png}}
+  \caption{Comparative macro MCC scores for all implemented models per fold.}
+  \label{macro_mcc_per_fold}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.55]{Images/mlp_train_test.png}}
+  \caption{MLP training and test accuracy against training epoch.}
+  \label{cnn_train_test}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.55]{Images/cnn_train_test.png}}
+  \caption{CNN training and test accuracy against training epoch.}
+  \label{mlp_train_test}
+\end{figure}
 \end{document}
+
+
