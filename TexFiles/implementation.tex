@@ -129,6 +129,21 @@ One important detail that was taken into account is that, in general, the descri
 
 For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
 
+\subsection{Parameter initialisation}
+
+The initial values of the parameters of a NN drastically influence the quality of the solution returned by the mini batch gradient descent optimisation algorithm, as they may direct the process towards different local minima. NN's weights receive an update proportional to the partial derivative of the error function with respect to the current weight in each iteration of training. Therefore, if the initial weights are too small, they will shrink exponentially as they go deeper and deeper into the network, until they vanish. This situation severely reduces NN's capacity of representing non-linearities. On the other hand, if the initial weights are too large, they will grow exponentially larger as they go deeper and deeper into the network, until they might overflow, crashing the model. Even if the parameters don't overflow, the layers can still become insanely large, resulting in the algorithm diverging. Bearing these two aspects in mind, the aim is to distribute the initial parameters in such a manner that they can successfully (i.e. not vanishing nor exploding) travel forwards and backwards withing the network. \\
+
+The initialisation strategy used for the CNN is He initialisation and consists of ...\\
+
+The initialisation strategy used for the MLP is called Xavier initialisation. It takes into account the problems shown above and bases the standard deviation or the variance of the weight initialisation on the number of variables involved. It thereby adjusts itself based on the number of weight values. It works on the idea that if the variance is kept constant from layer to layer in both the feed forward direction and back-propagation direction, the network will learn optimally. Specifically, this method initialises weights by drawing them from a small Gaussian distribution with: \\
+
+\begin{equation}
+  \centering
+  \mu = 0 \ \text{and} \ \sigma^2 = \frac{2}{n_{in}}
+\end{equation}
+
+where $n_{in}$ is the number of neurons which serve as input for the layer to which the weight belongs. \\
+
 \begin{figure}[H]
   \centering
   \centerline{\includegraphics[scale=0.6]{Images/cnn_layers.png}}
@@ -145,7 +160,7 @@ For each input graph $G$, given the construction of the receptive fields, and th
 
 \section{Regularisation Techniques}
 
-Deep NNs can be trained to develop complex relationships between their input data and their outcome. Depending on the amount of training data the network may develop a behaviour that brings good results for the training data, but fails as soon as unknown test data is fed into the network. To prevent overfitting in neural networks, there exist a variety of methods. A couple of them were implemented and are discussed in this section.
+Deep NNs can be trained to develop complex relationships between their input data and their outcome. Depending on the amount of training data the network may develop a behaviour that brings good results for the training data, but fails as soon as unknown test data is fed into the network. To prevent overfitting in neural networks, there exist a variety of methods. A few of them were implemented and are discussed in this section.
 
 \subsection{Dropout}
 
@@ -193,6 +208,22 @@ Then, the batch normalised inputs are also typically scaled and shifted based on
 \end{equation}
 
 \subsection{Weight Decay}
+Weight decay is a standard trick to improve the generalisation performance of neural
+networks by constraining the weights to be small in magnitude and penalizing large weights. Specifically, weight decay is defined as multiplying each weight in the gradient descent at each epoch by a factor $\lambda$ smaller than one and greater than zero. This technique is equivalent to introducing an L2 regularisation term to the loss function that one wants to optimise. Therefore, the updated loss functions will be of the following form: \\
+
+\begin{equation}
+  \centering
+  \mathfrak{L}_{updated} = \mathfrak{L}_{model} + \frac{\lambda}{2} \norm{\textbf{w}}
+\end{equation}
+
+where $\norm{\textbf{w}} = \sqrt{\sum |w_i^2|}$ is the L2 norm of the weights vector.\\
+
+Keras provides a weight regularisation API that allows one to add a penalty for weight size to the loss function. A weight regularizer can be added to each layer when the layer is defined in a Keras model. This is achieved by setting the $kernel\_regularizer$ argument on each layer.
+
+\subsection{Early Stopping}
+A problem with training neural networks is in the choice of the number of training epochs to use. Too many epochs can lead to overfitting of the training dataset as well as high training times, whereas too few may result in an underfit model. Early stopping is a method that allows one to specify an arbitrary large number of training epochs and stop training once the model performance stops improving on a hold out validation dataset. The error on the validation set is used as a proxy for the generalisation error in determining when overfitting has begun (i.e. the moment that after achieving a minimum, the error on the validation set starts increasing again).\\
+
+Keras supports the early stopping of training via a callback called EarlyStopping. This callback requires setting the performance measure to monitor (hence defining what is considered to be an improvement), the trigger, and once triggered, it will stop the training process. In Keras, callbacks provide a way to execute code and interact with the training model process automatically. Callbacks can be provided to the \textit{fit()} function via the \textit{callbacks} argument. Often, the first sign of no further improvement may not be the best time to stop training. This is because the model may coast into a plateau of no improvement or even get slightly worse before improving considerably. We can account for this by adding a delay to the trigger in terms of the number of epochs on which we would like to see no improvement. This can be done by setting the \textit{patience} argument. \\
 
 
 \section{Renaming the Files}
