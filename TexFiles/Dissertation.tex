@@ -1,4 +1,5 @@
-\documentclass[12pt,a4paper,twoside,openright]{report}
+\documentclass[12pt,a4paper,oneside]{report}
+
 \usepackage[pdfborder={0 0 0}]{hyperref}    % turns references into hyperlinks
 \usepackage[margin=25mm]{geometry}  % adjusts page layout
 \usepackage{graphicx}  % allows inclusion of PDF, PNG and JPG images
@@ -35,10 +36,14 @@
 \usepackage{enumitem}
 \usepackage{tikz}
 
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+\definecolor{ao(english)}{rgb}{0.0, 0.5, 0.0}
+
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \newcommand{\greencheck}{}%
 \DeclareRobustCommand{\greencheck}{%
-  \tikz\fill[scale=0.4, color=green]
+  \tikz\fill[scale=0.4, color=ao(english)]
   (0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;%
 }
 
@@ -140,6 +145,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \pagestyle{plain}
+\newpage
+
+\section*{Declaration of Originality}
+I, Tiberiu-George Copaciu of Homerton College,
+being a candidate for Part II of the Computer Science Tripos,
+hereby declare that this dissertation and the work described in it
+are my own work, unaided except as may be specified below, and
+that the dissertation does not contain material that has already
+been used to any substantial extent for a comparable purpose. \\
+
+\noindent
+I, Tiberiu-George Copaciu of Homerton College,
+am content for my dissertation to be made available to the students and staff of the University. \\
+
+\noindent
+Signed
+\includegraphics[height=1.5\baselineskip]{Images/signature.jpg}
+\\ \\
+Date \today
+
+\newpage
 
 \chapter*{Proforma}
 
@@ -167,19 +193,6 @@ This project aims to give a solution to the problem of files created either by u
 \section*{Special Difficulties}
 None.
 
-\newpage
-\section*{Declaration}
-I, Tiberiu-George Copaciu of Homerton College,
-being a candidate for Part II of the Computer Science Tripos,
-hereby declare that this dissertation and the work described in it
-are my own work, unaided except as may be specified below, and
-that the dissertation does not contain material that has already
-been used to any substantial extent for a comparable purpose.
-\\ \\
-Signed
-\includegraphics[height=1.5\baselineskip]{Images/signature.jpg}
-\\ \\
-Date \today
 
 \newpage
 \tableofcontents

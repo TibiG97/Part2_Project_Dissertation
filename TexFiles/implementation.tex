@@ -5,32 +5,17 @@
 In this chapter I will discuss how this project is structured, going through the high-level details of the actual implementation that respects all the requirements defined in Section \ref{Requirement Analysis}. It will review how the initial data is processed and how the extracted features of interest are used with a view to creating further synthetic and real datasets. Furthermore, the chapter examines how the Patchy-San algorithm operates on graph inputs in order to create suitable NNs training data and thus, how the NNs architectures are designed and optimised for the given classification task. Finally, the way in which files are renamed and reorganised into a virtual filesystem are analysed. \\
 
 
-\section{Data Analysis and Processing}
-
-\subsection{Data Properties}
-
-\begin{figure}[H]
-  \centering
-  \centerline{\includegraphics[scale = 0.86]{Images/nodedegdist.png}}
-  \caption{Node degree distribution in Neo4J database.}
-  \label{nodedegdist}
-\end{figure}
-
-\subsection{Neo4J Interaction and Feature Extraction}
-
-\subsection{Feature Engineering}
-
-\subsection{Synthetic Data Generation} \label{synthetic data generation}
-
 
 \section{Overall Structure of the Project}
 
+\subsection{Renaming Pipeline Overview}
 \begin{figure}[H]
   \centering
   \centerline{\includegraphics[scale = 0.6]{Images/pipeline.png}}
   \caption{Overview of the implemented ML pipeline.}
   \label{pipeline}
 \end{figure}
+\subsection{Repository Overview}
 
 \begin{figure}[H]
   \centering
@@ -38,125 +23,6 @@ In this chapter I will discuss how this project is structured, going through the
   \caption{UML diagram illustrating the inheritance of implemented classifiers.}
   \label{OOP}
 \end{figure}
-
-\subsection{Overview of the Renaming Pipeline}
-
-\subsection{Nested Cross-Validation}
-
-The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance graph. In order to deal with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV) procedure. A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
-
-\begin{itemize}[label={}]
-  \item 1. divide the dataset into K stratified cross-validation folds at random
-  \item 2. for each fold $k$ = 1,2,...,K (outer loop for evaluation of the model with selected hyperparameter):
-        \begin{itemize}[label={}]
-          \item 2.1. let fold $k$ be the outer test set
-          \item 2.2. let all data except for fold $k$ be the outer training set
-          \item 2.3. randomly split training set into L stratified fold
-          \item 2.4. for each fold $l$ = 1,2,...,L (inner loop for hyperparameter tuning):
-                \begin{itemize}[label={}]
-                  \item 2.4.1. let fold $l$ be the inner validation set
-                  \item 2.4.2. let all data except fold $k$ and fold $l$ be the inner training set
-                  \item 2.4.3. train with each hyperparameter on inner training set and evaluate on fold $l$, keeping track of performance metrics
-                \end{itemize}
-          \item 2.5. for each hyperparameter setting, calculate average metrics score over the L folds and choose the best one
-          \item 2.6. train a model with the best hyperparameter on fold $k$, evaluate its performance and save its score
-        \end{itemize}
-  \item 3. calculate the mean score over all K folds and report as the generalisation error
-\end{itemize} \bigskip
-
-An outer CV procedure is performed to provide a performance estimate used to select the optimal model. In each fold of the outer CV, the hyperparameters of the model are tuned independently to maximise an inner CV estimate of generalisation performance. The outer CV is then essentially estimating the performance of a method for fitting a model, CV based hyperparameter tuning. This eliminates the bias introduced by a flat CV procedure as the test data in each iteration of the outer CV has not been used to optimise the performance of the model in any way, and may therefore provide a more reliable criterion for choosing the best model. Another advantage consists of tuning and evaluating on the entire dataset, instead of completely discarding the validation set. The computational expense of nested CV, however, is substantially higher. \\
-
-
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.95]{Images/nested_cv.png}
-  \caption{Structure of a Nested Cross-Validation used for both model evaluation and hyperparameter tuning.}
-  \label{NestedCV}
-\end{figure}
-
-
-\section{Patchy-San}
-
-Patchy-San aims to bring CNNs to bear on a large-class of graph based learning problems. This novel algorithm consists of a general approach of extracting locally connected regions from graphs and model them in such a way so that they become a suitable input for a CNN. In this context, suitable refers to both structurally adequate and having the capability of preserving graph's expressivity, in the sense that local pattern information is not lost when linearising the set of features. \\
-
-My re-implementation brings a few adjustments and extensions (mentioned in the upcoming sections) to the original algorithm so that it suits better the shape and properties of the dataset provided. \\
-
-\subsection{Node Sequence Selection}
-
-The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can use the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
-
-Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.5]{Images/nodeseqsel.png}
-  \caption{Input graph node's sorted with respect to the labelling function. $w$ root nodes selected within stride $s$.}
-  \label{nodeseqsel}
-\end{figure}
-
-\subsection{Neighbourhood Assembly}
-
-The next stage involves assembling a local neighbourhood for each root previously determined. This is accomplished by using a standard breath-first search algorithm. Thus, I explore vertices with an increasing distance from the root, adding them to a set N. If the number of collected nodes is smaller than a pre-established number $k$, I continue exploring the immediate neighbours of the latest nodes added to the set until either $k$ nodes are found, or there are no more neighbours. In the latter case, for padding purposes, dummy nodes, having dummy attributes are added. This helps not throwing away information that might convey in-graph patters. However, it introduces the risk of misidentifying the padding nodes as a pattern themselves. \\
-
-One final remark for the neighbourhood assembly procedure is that the order in which the immediate neighbours of a node are explored is with respect to, once again, the timestamp of each influence edge. Specifically, newer system activities will be considered with priority, also ensuring that the procedure is consistent and always gives the same output for the same graph. \\
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.375]{Images/neighassemb2.png}
-  \caption{Illustration of a Breath-First Search used for computing a neighbourhood.}
-  \label{neighassemb}
-\end{figure}
-
-
-\subsection{Receptive Field Normalisation}
-
-The receptive field of a node is built by normalising the neighbourhood assembled in the previous step. The normalisation imposes an order on the nodes of the neighbourhood graph so as to map from the unordered graph space to a vector space with a linear order. This time, the graph labelling procedure is way more difficult to compute, as appropriately choosing it is at the core of the representation that Patchy-San proposes. Hence the performance of the classification pipeline will highly depend on the labelling procedure. \\
-
-The basic idea is that the graph labelling procedure should assign nodes of two different graphs in similar positions if and only if they have similar structural roles in the graphs. The labelling of the vertices is therefore constrained by the graph distance to the root node $v$. For any two vertices $u$, $w$, if $u$ is closer to $v$ than $w$, then $v$ is
-always ranked higher than $w$. This definition, illustrated in Figure \ref{normalisation}, ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.55]{Images/normalisation.png}
-  \caption{Receptive Field Normalisation from previously selected neighbourhood. Nodes having the same colour have the same rank with respect to root in the liniarisation, while numbers illustrate tie-breakers.}
-  \label{normalisation}
-\end{figure}
-
-One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary.
-
-\section{Convolutional Neural Network}
-
-For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
-
-\subsection{Parameter initialisation}
-
-The initial values of the parameters of a NN drastically influence the quality of the solution returned by the mini batch gradient descent optimisation algorithm, as they may direct the process towards different local minima. NN's weights receive an update proportional to the partial derivative of the error function with respect to the current weight in each iteration of training. Therefore, if the initial weights are too small, they will shrink exponentially as they go deeper and deeper into the network, until they vanish. This situation severely reduces NN's capacity of representing non-linearities. On the other hand, if the initial weights are too large, they will grow exponentially larger as they go deeper and deeper into the network, until they might overflow, crashing the model. Even if the parameters don't overflow, the layers can still become insanely large, resulting in the algorithm diverging. Bearing these two aspects in mind, the aim is to distribute the initial parameters in such a manner that they can successfully (i.e. not vanishing nor exploding) travel forwards and backwards withing the network. \\
-
-The initialisation strategy used for the CNN is He initialisation and consists of ...\\
-
-The initialisation strategy used for the MLP is called Xavier initialisation. It takes into account the problems shown above and bases the standard deviation or the variance of the weight initialisation on the number of variables involved. It thereby adjusts itself based on the number of weight values. It works on the idea that if the variance is kept constant from layer to layer in both the feed forward direction and back-propagation direction, the network will learn optimally. Specifically, this method initialises weights by drawing them from a small Gaussian distribution with: \\
-
-\begin{equation}
-  \centering
-  \mu = 0 \ \text{and} \ \sigma^2 = \frac{2}{n_{in}}
-\end{equation}
-
-where $n_{in}$ is the number of neurons which serve as input for the layer to which the weight belongs. \\
-
-\begin{figure}[H]
-  \centering
-  \centerline{\includegraphics[scale=0.6]{Images/cnn_layers.png}}
-  \caption{Diagram illustrating the configuration of hidden and output layers of the CNN.}
-  \label{cnn_layers}
-\end{figure}
-
-     \begin{figure}[H]
-  \centering
-  \centerline{\includegraphics[scale=0.6]{Images/mlp_layers.png}}
-  \caption{Diagram illustrating the configuration of hidden and output layers of the MLP.}
-  \label{mlp_layers}
-    \end{figure}
 
 \section{Regularisation Techniques}
 
@@ -225,11 +91,211 @@ A problem with training neural networks is in the choice of the number of traini
 
 Keras supports the early stopping of training via a callback called EarlyStopping. This callback requires setting the performance measure to monitor (hence defining what is considered to be an improvement), the trigger, and once triggered, it will stop the training process. In Keras, callbacks provide a way to execute code and interact with the training model process automatically. Callbacks can be provided to the \textit{fit()} function via the \textit{callbacks} argument. Often, the first sign of no further improvement may not be the best time to stop training. This is because the model may coast into a plateau of no improvement or even get slightly worse before improving considerably. We can account for this by adding a delay to the trigger in terms of the number of epochs on which we would like to see no improvement. This can be done by setting the \textit{patience} argument. \\
 
+ 
+ \section{Parameter Initialisation}
 
-\section{Renaming the Files}
+The initial values of the parameters of a NN drastically influence the quality of the solution returned by the mini batch gradient descent optimisation algorithm, as they may direct the process towards different local minima. NN's weights receive an update proportional to the partial derivative of the error function with respect to the current weight in each iteration of training. Therefore, if the initial weights are too small, they will shrink exponentially as they go deeper and deeper into the network, until they vanish (i.e. become 0). This situation severely reduces NN's capacity of representing non-linearities. On the other hand, if the initial weights are too large, they will grow exponentially larger as they go deeper and deeper into the network, until they might overflow, crashing the model. Even if the parameters don't overflow, the layers can still become unreasonably large, resulting in the algorithm diverging. Bearing these two aspects in mind, the aim is to distribute the initial parameters in such a manner that they can successfully (i.e. not vanishing nor exploding) travel forwards and backwards withing the network. \\
 
-\section{Building a Virtual File System}
+One very popular initialisation strategy is called Xavier/Glorot initialisation. It takes into account the problems shown above and bases the standard deviation or the variance of the weight initialisation on the number of variables involved. It thereby adjusts itself based on the number of weight values. It works on the idea that if the variance is kept constant from layer to layer in both the feed forward direction and back-propagation direction, the network will learn optimally. Specifically, this method initialises weights by drawing them from a small Gaussian distribution with: \\
 
+\begin{equation}
+  \centering
+  \mu = 0 \ \text{and} \ \sigma^2 = \frac{1}{n_{in}}
+\end{equation}
+
+where $n_{in}$ is the number of neurons which serve as input for the layer to which the weight belongs. \\
+
+Glorot initialisation works well for sigmoid and tanh activations, as has been proved in various experiments presented in \textit{Understanding the difficulty of training deep feedforward neural networks}. However, since ReLU zeroes out negative inputs, it roughly removes half the variance. Illustration of the mentioned activation functions can be seen in Figure \ref{activation_functions}. \textit{He et al.(2015)} conducted further experiments on this topic discovering that this is easily amended by multiplying one of our conditions above by two, hence obtaining the He initialisation (which is thus my choice for both implemented NN architectures) :
+
+\begin{equation}
+  \centering
+  \mu = 0 \ \text{and} \ \sigma^2 = \frac{2}{n_{in}}
+\end{equation}
+
+\bigskip
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.4]{Images/activation_functions.png}
+  \caption{Activation functions.}
+  \label{activation_functions}
+\end{figure}
+
+\section{Context Classification Pipeline}
+\subsection{Data Analysis and Processing}
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale = 0.86]{Images/nodedegdist.png}}
+  \caption{Node degree distribution in Neo4J database.}
+  \label{nodedegdist}
+\end{figure}
+\subsection{Neo4J Interaction and Feature Extraction}
+\subsection{Feature Engineering}
+\subsection{Synthetic Data Generation} \label{Synthetic Data Generation}
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale = 0.35]{Images/synth_dataset.png}}
+  \caption{Synthetic graph structure.}
+  \label{synth_dataset}
+\end{figure}
+
+\subsection{Patchy-San}
+
+Patchy-San aims to bring CNNs to bear on a large-class of graph based learning problems. This novel algorithm consists of a general approach of extracting locally connected regions from graphs and model them in such a way so that they become a suitable input for a CNN. In this context, suitable refers to both structurally adequate and having the capability of preserving graph's expressivity, in the sense that local pattern information is not lost when linearising the set of features. \\
+
+My re-implementation brings a few adjustments and extensions (mentioned in the upcoming sections) to the original algorithm so that it suits better the shape and properties of the dataset provided. \\
+
+\subsubsection*{Node Sequence Selection}
+
+The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can use the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
+
+Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.5]{Images/nodeseqsel.png}
+  \caption{Input graph node's sorted with respect to the labelling function. $w$ root nodes selected within stride $s$.}
+  \label{nodeseqsel}
+\end{figure}
+
+\subsubsection*{Neighbourhood Assembly}
+
+The next stage involves assembling a local neighbourhood for each root previously determined. This is accomplished by using a standard breath-first search algorithm. Thus, I explore vertices with an increasing distance from the root, adding them to a set N. If the number of collected nodes is smaller than a pre-established number $k$, I continue exploring the immediate neighbours of the latest nodes added to the set until either $k$ nodes are found, or there are no more neighbours. In the latter case, for padding purposes, dummy nodes, having dummy attributes are added. This helps not throwing away information that might convey in-graph patters. However, it introduces the risk of misidentifying the padding nodes as a pattern themselves. \\
+
+One final remark for the neighbourhood assembly procedure is that the order in which the immediate neighbours of a node are explored is with respect to, once again, the timestamp of each influence edge. Specifically, newer system activities will be considered with priority, also ensuring that the procedure is consistent and always gives the same output for the same graph. \\
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.375]{Images/neighassemb2.png}
+  \caption{Illustration of a Breath-First Search used for computing a neighbourhood.}
+  \label{neighassemb}
+\end{figure}
+
+
+\subsubsection*{Receptive Field Normalisation}
+
+The receptive field of a node is built by normalising the neighbourhood assembled in the previous step. The normalisation imposes an order on the nodes of the neighbourhood graph so as to map from the unordered graph space to a vector space with a linear order. This time, the graph labelling procedure is way more difficult to compute, as appropriately choosing it is at the core of the representation that Patchy-San proposes. Hence the performance of the classification pipeline will highly depend on the labelling procedure. \\
+
+The basic idea is that the graph labelling procedure should assign nodes of two different graphs in similar positions if and only if they have similar structural roles in the graphs. The labelling of the vertices is therefore constrained by the graph distance to the root node $v$. For any two vertices $u$, $w$, if $u$ is closer to $v$ than $w$, then $v$ is
+always ranked higher than $w$. This definition, illustrated in Figure \ref{normalisation}, ensures that $v$ has always rank 1, and that the closer a vertex is to $v$ in the graph, the higher it is ranked in the vector space representation. Consequently, in my project, this implies that groups of nodes denoting: processes interacting directly with the file to be classified, parent processes of the ones just mentioned, past processes interacting with the file at different moments in time; will be close together in the linear representation and also in same order for different graphs.\\
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.55]{Images/normalisation.png}
+  \caption{Receptive Field Normalisation from previously selected neighbourhood. Nodes having the same colour have the same rank with respect to root in the liniarisation, while numbers illustrate tie-breakers.}
+  \label{normalisation}
+\end{figure}
+
+One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary.
+
+\subsection{Convolutional Neural Network}
+
+For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
+
+
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.6]{Images/cnn_layers.png}}
+  \caption{Diagram illustrating the configuration of hidden and output layers of the CNN.}
+  \label{cnn_layers}
+\end{figure}
+
+
+\section{Content Classification Pipeline}
+\subsection{Data Analysis and Processing}
+\subsubsection*{Feature Hashing}
+
+Feature hashing is a fast and space-efficient way of vectorising features. It works by converting unique tokens into integers. Specifically, by applying a hash function to the features and using their hash values as indices directly. It operates on the exact strings that one provides as input and does not perform any linguistic analysis or preprocessing. The advantage of using feature hashing is that text documents of variable-length can be represented as numeric feature vectors of equal-length. This achieves at the same time a numerical input appropriate for machine learning algorithms, and also dimensionality reduction. Another aspect worth mentioning is that, for instance, in tasks involving natural language, it possible that some misspelling ends up incrementing the same index as some legitimate word as it passes through the hash function, resulting in a collision. This scenario is highly unlikely in my project, where the input consists of raw log files. Moreover, increasing the hash space dimensionality makes probability of collisions negligeable.\\
+
+\subsubsection*{Feature Scaling}
+
+As previously mentioned, increasing the hash space has its upside in the fact that it reduces the probability of collisions. However, the larger the hash space the lower the ratio between the number of different values assigned to tokens over the number of different values provided by the hash function (given the constant content of the log files involved). These may result in the vectorised dataset containing features highly varying in magnitudes and range. Machine Learning algorithms usually don’t perform well when the input numerical attributes have very different scales. To suppress this effect, we need to bring all features to the same level of magnitudes. This can be achieved by scaling. \\
+
+The scaling strategy applied in my project is called min-max scaling, in which values are
+shifted and rescaled so that they end up ranging between 0 and 1. It is done by subtracting the min value and dividing by the max minus the min (min and max represent the minimum and maximum values in the feature vector X). The formal formula is given below: \\
+
+\begin{equation}
+    \centering
+    norm(X) = \frac{X - min(X)}{max(X) - min(X)}
+\end{equation}
+
+\subsection{Multilayer Perceptron}
+\begin{figure}[H]
+  \centering
+  \centerline{\includegraphics[scale=0.6]{Images/mlp_layers.png}}
+  \caption{Diagram illustrating the configuration of hidden and output layers of the MLP.}
+  \label{mlp_layers}
+\end{figure}
+
+
+\section{Ensemble Classification}
+
+A successful approach to reducing the variance of neural network models is to train multiple models instead of a single model and to combine the predictions from these models. This is called ensemble learning and not only reduces the variance of predictions but also can (possibly) result in predictions that are better than any single model. \\
+
+\subsection{Stacking}
+
+Stacking is an ensemble learning technique that combines multiple classification (or regression) models via a meta-classifier or a (meta-regressor). The base level models are trained based on a complete training set, then the meta-model is trained on the outputs of the base level models as features. The main aspect that makes this technique suitable for my project is that, in comparison with other ensemble learning methods (such as Bagging or Boosting), the base level of Stacking often consists of different learning algorithms. This makes possible combining the context and content features, which is at the core of the project.\\
+
+In my implementation, I run a Nested Cross-Validation (described in Section \ref{nested_cross_validation}) over both CNN and MLP, and I concatenate their best predictions (i.e. predictions achieving highest accuracy score) over all ten outer folds, say $\{$CNN$_1$, CNN$_2$, ..., CNN$_N$$\}$ and $\{$MLP$_1$, MLP$_2$, ..., MLP$_N$$\}$ where N is the size of the files dataset. 
+Afterwards I use a dataset obtained from pairing predictions from the two classifiers $\{$(CNN$_1$, MLP$_1$), (CNN$_2$, MLP$_2$), ..., (CNN$_N$, MLP$_N$)$\}$ and the original true labels for conducting a regular Cross-Validation on a meta-classifier. The outputs of the meta-classifier are regarded as the overall predictions of the entire implemented machine learning pipeline. My choice for a meta-classifier is Logistic Regression. \\
+
+\subsection{Logistic Regression}
+
+Logistic Regression is one of the most simple and commonly used Machine Learning algorithms for two-class classification. It describes and estimates the relationship between one dependent binary variable and independent variables. A logistic regression will model the chance of an outcome based on individual characteristics. Because chance is a ratio, what will be actually modeled is the logarithm of the chance given by:: 
+
+\begin{equation}
+    \centering
+    \text{logit($\pi$)} = \text{log}(\frac{\pi}{1 - \pi}) = \beta_0 + \beta_1 * X_1 + ... + \beta_n * X_n 
+\end{equation} 
+
+where $\pi$ indicates the probability of an event, and $\beta_i$ are the regression coefficients associated with the reference group and the $X_i$ explanatory variables. \\
+
+In the multiclass case, in the settings of the project, the training algorithm uses the one-vs-all (OvA) scheme.
+Build N(N-1) classifiers (for N classes), one classifier to distinguish each pair of classes $i$ and $j$. Let f$_{ij}$ be the classifier where class $i$ were positive examples and class $j$ were negative. Note f$_{ji}$ $=$ -f$_{ij}$. Classify using:
+
+\begin{equation}
+    \centering
+    f(x) = \argmax_{i} \sum_{j} f_{ij}(x)
+\end{equation} 
+
+On the one hand, given of its efficient and straightforward nature, logistic regression doesn't require high computation power, it is easy to implement, easily interpretable and used widely by data analyst and scientist. On the other hand, logistic regression is not able to handle a large number of categorical features/variables. It is vulnerable to overfitting. Logistic regression will not perform well with independent variables that are not correlated to the target variable and are very similar or correlated to each other. However, none of this properties is present in our case where the input consists of prediction labels from the base classifiers. Therefore, logistic regression is an excellent choice for a meta-classifier. \\
+
+\section{Nested Cross-Validation} \label{nested_cross_validation}
+
+The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance data. In order to deal with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV) procedure. A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
+
+\begin{itemize}[label={}]
+  \item \textbf{Step 1.} divide the dataset into K stratified cross-validation folds at random
+  \item \textbf{Step 2.} for each fold $k$ = 1,2,...,K (outer loop for evaluation of the model with selected hyperparameter):
+        \begin{itemize}[label={}]
+          \item 2.1. let fold $k$ be the outer test set
+          \item 2.2. let all data except for fold $k$ be the outer training set
+          \item 2.3. randomly split training set into L stratified fold
+          \item 2.4. for each fold $l$ = 1,2,...,L (inner loop for hyperparameter tuning):
+                \begin{itemize}[label={}]
+                  \item 2.4.1. let fold $l$ be the inner validation set
+                  \item 2.4.2. let all data except fold $k$ and fold $l$ be the inner training set
+                  \item 2.4.3. train with each hyperparameter on inner training set and evaluate on fold $l$, keeping track of performance metrics
+                \end{itemize}
+          \item 2.5. for each hyperparameter setting, calculate average metrics score over the L folds and choose the best one
+          \item 2.6. train a model with the best hyperparameter on fold $k$, evaluate its performance and save its score
+        \end{itemize}
+  \item \textbf{Step 3.} calculate the mean score over all K folds and report as the generalisation error
+\end{itemize} \bigskip
+
+An outer CV procedure is performed to provide a performance estimate used to select the optimal model. In each fold of the outer CV, the hyperparameters of the model are tuned independently to maximise an inner CV estimate of generalisation performance. The outer CV is then essentially estimating the performance of a method for fitting a model, CV based hyperparameter tuning. This eliminates the bias introduced by a flat CV procedure as the test data in each iteration of the outer CV has not been used to optimise the performance of the model in any way, and may therefore provide a more reliable criterion for choosing the best model. The computational expense of nested CV, however, is substantially higher. \\
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.95]{Images/nested_cv.png}
+  \caption{Structure of a Nested Cross-Validation used for both model evaluation and hyperparameter tuning.}
+  \label{NestedCV}
+\end{figure}
+
+\section{Rule Based Renaming}
 
 \section{Summary}
 

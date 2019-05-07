@@ -4,7 +4,6 @@
 
 The Preparation chapter presents the fundamental theory which serves as bases on which the algorithms in this project are developed. It explores the requirement analysis and software engineering strategies such that the project successfully achieves and (possibly) surpasses the success criteria. All the work described in this chapter is prior to any actual implementation.
 
-\section{Introduction to Patchy-San}
 
 \section{Introduction to Neural Networks}
 
@@ -26,7 +25,7 @@ The purpose of an activation function is to introduce non-linearity into a NN, i
 \begin{itemize}
   \item the sigmoid/logistic function: \\
         \begin{equation}
-          \sigma(x) = \frac{1}{1 + e^{-1}}
+          \sigma(x) = \frac{1}{1 + e^{-x}}
         \end{equation}
 
   \item the hyperbolic tanget function: \\
@@ -148,6 +147,33 @@ A trained model used on unseen data returns a prediction y. This can be used to 
 \end{equation}
 
 \smallskip
+
+\section{Introduction to Patchy-San}
+
+\section{Baseline Models}
+
+This section briefly presents the theoretical background behind the classification models for which off-the-shelf implementations were used, serving as baselines for the context classification pipeline architecture. 
+
+\subsection{K-Nearest Neighbours Classifier}
+Many classification approaches attempt to estimate the conditional distribution of Y (output probabilities) given X (input features), and then classify a given observation to the class with highest estimated probability. One such method is the K-nearest neighbors (KNN) classifier. Given a positive integer K and a test observation x$_0$, the KNN classifier first identifies the neighbours K points in the training data that are closest to x$_0$, represented by N$_0$. It then estimates the conditional probability for class $j$ as the fraction of points in N$_0$ whose response values equal $j$:
+
+\begin{equation}
+    Pr(Y = j|X = x_0) = \frac{1}{K} \sum_{i \in N_0} I(y_i = j)
+\end{equation}
+
+Finally, KNN applies Bayes rule and classifies the test observation x$_0$ to
+the class with the largest probability. \\
+
+In other words, KNN estimates how likely a data point is to be a member of one group or the other depending on what group the data points nearest to it are in. A worth noting aspect of KNN is that it is an example of a \textit{lazy learner} algorithm, meaning that it does not build a model using the training set until a query of the data set is performed, as opposed to the NN approaches later presented. \\
+
+
+
+
+\subsection{Random Forest Classifier}
+
+A decision tree is a classifier expressed as a recursive partition of the instance space. The decision tree consists of nodes that form a rooted tree. In a decision tree, each internal node splits the instance space into two or more sub-spaces according to a certain discrete function of the input attributes values. In the simplest and most frequent case each test considers a single attribute, such that the instance space is partitioned according to the attribute’s value. Each leaf is assigned to one class representing the most appropriate target value. Alternatively, the leaf may hold a probability vector indicating the probability of the target attribute having a certain value. Instances are classified by navigating them from the root of the tree down to a leaf, according to the outcome of the tests along the path. \\
+
+Random forest classifier creates a set of decision trees from randomly selected subset of training set. It then aggregates the votes from different decision trees to decide the final class of the test object. \\
 
 \section{Requirement Analysis} \label{Requirement Analysis}
 

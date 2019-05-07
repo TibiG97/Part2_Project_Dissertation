@@ -2,29 +2,28 @@
 
     \chapter{Evaluation}
     
-    This chapter revisits the success criteria, explaining how they were achieved and exceeded. It firstly introduces popular methodologies for evaluating classification models and then presents and discusses the results obtained on synthetically generated datasets (defined in Section ...). Moreover, how a comparative analysis between the implemented models is conducted, is explained in Section ... . Finally, timing performances of the main pipeline, in simulated real-world conditions, are presented. \\
+    This chapter revisits the success criteria, explaining how they were achieved and exceeded. It firstly introduces popular methodologies for evaluating classification models and then presents and discusses the results obtained on synthetically generated datasets (defined in Section \ref{Synthetic Data Generation}). Moreover, how a comparative analysis between the implemented models is conducted, is explained in Section ... . Finally, timing performances of the main pipeline, in simulated real-world conditions, are presented. \\
     
     \section{Success Criteria}
     
     The initial success criteria for a core implementation of the project were defined in the original Project Proposal and are also listed below: 
     
     \begin{itemize}
-        \item \textit{develop and optimise a machine learning pipeline that can use both provenance data and content data in order to do the file classification}. \greencheck
+        \item \textbf{Criterion 1:} \textit{develop and optimise a machine learning pipeline that can use both provenance data and content data in order to do the file classification}. \greencheck
         
-        \item \textit{perform a quantitative evaluation of the implemented architecture(s) and investigate the best trade-off of precision and recall}. \greencheck
+        \item \textbf{Criterion 2:} \textit{perform a quantitative evaluation of the implemented architecture(s) and investigate the best trade-off of precision and recall}. \greencheck
         
-        \item \textit{investigate the performance of the implemented pipeline in terms of time and space requirements}. \greencheck
+        \item \textbf{Criterion 3:} \textit{investigate the performance of the implemented pipeline in terms of time and space requirements}. \greencheck
     
     \end{itemize}
         
     Additionally, a couple of extensions have been implemented, improving the perspective this project gives on the actual performance of the main pipeline: 
     
     \begin{itemize}
-        \item \textit{make us of and tune 3 additional off-the-shelf implementations of multiclass classifiers: KNeighbours, Random Forest, Logistic Regression.} \greencheck
+        \item \textbf{Extension 1:} \textit{make us of and tune 2 additional off-the-shelf implementations of multiclass classifiers: KNeighbours, Random Forest.} \greencheck
         
-        \item \textit{implement and tune one additional NN model: Multilayer Perceptron.} \greencheck
+        \item \textbf{Extension 2:} \textit{perform a comparative analysis between the implemented models, using the off-the-shelf implementations as baselines for the CNN.} \greencheck
         
-        \item \textit{perform a comparative analysis between the implemented models, using the off-the-shelf implementations as baselines for the NNs.} \greencheck
     \end{itemize}
     
     
@@ -130,15 +129,15 @@
     
     \begin{figure}[H]
   \centering
-  \centerline{\includegraphics[scale=0.8]{Images/acc_per_fold.png}}
-  \caption{Comparative accuracy scores for all implemented models per fold.}
+  \centerline{\includegraphics[scale=0.8]{Images/acc_per_fold_new_cols.png}}
+  \caption{Comparative accuracy scores for all implemented models per outer fold.}
   \label{acc_per_fold}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \centerline{\includegraphics[scale=0.8]{Images/macro_mcc_per_fold.png}}
-  \caption{Comparative macro MCC scores for all implemented models per fold.}
+  \centerline{\includegraphics[scale=0.8]{Images/macro_mcc_per_fold_new_cols.png}}
+  \caption{Comparative macro MCC scores for all implemented models per outer fold.}
   \label{macro_mcc_per_fold}
 \end{figure}
 
