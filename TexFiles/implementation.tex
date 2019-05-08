@@ -8,20 +8,35 @@ In this chapter I will discuss how this project is structured, going through the
 
 \section{Overall Structure of the Project}
 
-\subsection{Renaming Pipeline Overview}
+The renaming pipeline (clearly illustrated in Figure \ref{pipeline}) is comprised of four main components, each of them aiming to fulfil a different goal of the project:
+
+\begin{itemize}
+    \item \textbf{context classification pipeline:} this component is responsible with, firstly, generating synthetic graph datasets which mimic properties of real data. These graph are afterwards processed by the Patchy-San algorithm into suitable input for a convolutional neural network  which returns the desired predictions. Additionally, two off-the-shelf implementations of KNN and RandomForest algorithms were used as baseline for this component. 
+
+    \item \textbf{content classification pipeline:} this component is responsible with, firstly, performing various transformations on log files content in order to obtain numerical vectors. These vectors are used as input for a multilayer perceptron, which returns the desired predictions.
+    
+    \item \textbf{ensemble of stacked classifiers:} the predictions obtained from the first two components are used (and hence, combined) to train and test a new ML model, a so-called meta-classifier. The final predictions of these stacking classifiers ensemble are regarded as the overall classification results. 
+    
+    \item \textbf{rule based renaming:} tacking into account the classification results, context information and a user-given policy, this component suggests renaming possibilities for files that have non-descriptive names. 
+    
+\end{itemize}
+
 \begin{figure}[H]
   \centering
   \centerline{\includegraphics[scale = 0.6]{Images/pipeline.png}}
   \caption{Overview of the implemented ML pipeline.}
   \label{pipeline}
 \end{figure}
-\subsection{Repository Overview}
+
+Besides the renaming pipeline, the tuning and evaluation of the ML models was achieved using a popular procedure, nested cross-validation, which is described in detail in Section \ref{nested_cross_validation}. \\
+
+When designing the ML models, a few of aspects have been taken into account: there is a lot of code that could be shared between the models and reused, the user would mostly be interested in model's functionality while implementation details could be hidden, and, the code should be highly scalable in that, at any time, a new model can be implemented and added to the project with ease. Given all of these, I decided to follow the object-oriented paradigm when building the classifiers. This design choice can be observed in Figure \ref{uml_oop}.
 
 \begin{figure}[H]
   \centering
-  \centerline{\includegraphics[scale = 0.7]{Images/uml.png}}
+  \centerline{\includegraphics[scale = 0.6]{Images/uml.png}}
   \caption{UML diagram illustrating the inheritance of implemented classifiers.}
-  \label{OOP}
+  \label{uml_oop}
 \end{figure}
 
 \section{Regularisation Techniques}
@@ -30,9 +45,9 @@ Deep NNs can be trained to develop complex relationships between their input dat
 
 \subsection{Dropout}
 
-Dropout is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
+Dropout is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $k_p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
 
-One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $k_p$ during training, the outgoing weights of that unit are multiplied by $p$ at test
+One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $k_p$ during training, the outgoing weights of that unit are multiplied by $k_p$ at test
 time. Another approach is to re-scale weights at training time instead, after each weight update at the end of the mini-batch. This is sometimes called inverse dropout and is the way both Keras and Pytorch deep learning libraries implement it. \\
 
 
@@ -75,12 +90,12 @@ Then, the batch normalised inputs are also typically scaled and shifted based on
 
 \subsection{Weight Decay}
 Weight decay is a standard trick to improve the generalisation performance of neural
-networks by constraining the weights to be small in magnitude and penalizing large weights. Specifically, weight decay is defined as multiplying each weight in the gradient descent at each epoch by a factor $\lambda$ smaller than one and greater than zero. This technique is equivalent to introducing an L2 regularisation term to the loss function that one wants to optimise. Therefore, the updated loss functions will be of the following form: \\
+networks by constraining the weights to be small in magnitude and penalising large weights. Specifically, weight decay is defined as multiplying each weight in the gradient descent at each epoch by a factor $\lambda$ smaller than one and greater than zero. This technique is equivalent to introducing an L2 regularisation term to the loss function that one wants to optimise. Therefore, the updated loss functions will be of the following form: \\
 
-\begin{equation}
+\begin{equation} \label{weight_decay}
   \centering
   \mathfrak{L}_{updated} = \mathfrak{L}_{model} + \frac{\lambda}{2} \norm{\textbf{w}}
-\end{equation}
+\end{equation} 
 
 where $\norm{\textbf{w}} = \sqrt{\sum |w_i^2|}$ is the L2 norm of the weights vector.\\
 
@@ -123,15 +138,32 @@ Glorot initialisation works well for sigmoid and tanh activations, as has been p
 
 \section{Context Classification Pipeline}
 \subsection{Data Analysis and Processing}
+
+From the provenance graphs described in the introduction, the context classification algorithm will consider file, process, and socket nodes, alongside with some of their various properties, encoded either in integer or string format. The only processing step applied for nodes was removing the isolated ones. Relationships between nodes are generally represented by influence, directed, edges. The property of interest of an edge is its timestamp, which can be distributed across the nodes it connects. For nodes ending up with multiple timestaps from multiple edges, an average timestamp can be computed and used as a feature. Section \ref{node_seq_sel} explains the importance of this feature in the context classification pipeline. \\
+
+Ideally, we would want for each file which needs to be classified to extract a sub-graph containing various processes and sockets interacting with it (not necessarily directly, i.e. in one hop) and use it as input for the ML pipeline. However, the provenance graphs are very sparse and this effect can be observed in Figure \ref{nodedegdist}. The total number of edges is roughly twice the total number of nodes (approximately 340,000 to 170,000). The problems raised by these aspects are further discussed and dealt with in Section \ref{Synthetic Data Generation} \\
+
+
 \begin{figure}[H]
   \centering
   \centerline{\includegraphics[scale = 0.86]{Images/nodedegdist.png}}
   \caption{Node degree distribution in Neo4J database.}
   \label{nodedegdist}
 \end{figure}
-\subsection{Neo4J Interaction and Feature Extraction}
+
+
 \subsection{Feature Engineering}
+
+There are 5 categorical features, in total, defining the feature vectors for each node: node$\_$type (file, process or socket), cmd$\_$line (for process), login$\_$user (for process), euid (for process), binary$\_$directory (for file). Note that although euid is an integer, it ranges in a very small set of values, which can be regarded as categories. \\
+
+
+The major choice was between using integer or one-hot encoding for these features. The integer values have a natural ordered relationship between each other and machine learning algorithms may be able to understand and harness this relationship. For categorical variables where no such ordinal relationship exists, such as the ones present in this project, using integer encoding and allowing the model to assume a natural ordering between categories may result in poor performance or unexpected results. In this case, a one-hot encoding can be applied to the integer representation. This is where the integer encoded variable is removed and a new binary variable is added for each unique integer value. Only the N$_{th}$ binary variable is set to 1, when the integer representation is N. \\
+
+For uniformity purposes, when one node does not present one of the features in the vector at all (e.g. a file does not have a cmd$\_$line), the feature is represented by the same number of binary variables, all 0. 
+
 \subsection{Synthetic Data Generation} \label{Synthetic Data Generation}
+
+Given the provenance data properties previously presented, it is simply not rich enough for conducting the intended experiments properly and creating a realistic view on the performance of the ML models. The aim of synthetic data generation is to create artificial datasets that mimic (some of) the properties of real data and are expressive enough to be successfully used for training and testing. \\
 
 \begin{figure}[H]
   \centering
@@ -140,15 +172,29 @@ Glorot initialisation works well for sigmoid and tanh activations, as has been p
   \label{synth_dataset}
 \end{figure}
 
+The most common pattern spotted in the real provenance data consists of a set of processes interacting with a file, the file then writing into an EditSession node all the changes made by the processes, and afterwards, and influence link is created between the EditSession and a new version of the file. This process is repeated multiple times, starting from the newly created version. An intuitive illustration is in Figure \ref{synth_dataset} (note that I decided to drop the EditSession nodes from the synthetic datasets as they are irrelevant for the actual classification). Given all of these, the properties on which generation of a synthetic graph is dependent are given below:
+
+\begin{itemize}
+    \item the node degree distribution of the real dataset
+    \item the node type distribution of the real dataset (process, file, socket)
+    \item the distributions of process properties: cmdline type, login$\_$user, euid value
+    \item distributions of file properties: binary directory containing the file
+    \item the number of versions of a file taken into account: History Depth (HD)
+    \item the level of depth taken into account when it comes to processes interacting with the file: Interaction Depth (ID)
+\end{itemize}
+
+Ideally, we would like the distributions of process and file properties to be the main parameters that will differentiate between classes. \\
+
+Finally, the node timestamps are generated by assigning increasing numbers, in the following order: to the most recent version of the file, to the processes interacting with it (proportional to their ID), to older version of the file (proportional to their HD) and processes interacting with them. \\
+
 \subsection{Patchy-San}
 
 Patchy-San aims to bring CNNs to bear on a large-class of graph based learning problems. This novel algorithm consists of a general approach of extracting locally connected regions from graphs and model them in such a way so that they become a suitable input for a CNN. In this context, suitable refers to both structurally adequate and having the capability of preserving graph's expressivity, in the sense that local pattern information is not lost when linearising the set of features. \\
 
-My re-implementation brings a few adjustments and extensions (mentioned in the upcoming sections) to the original algorithm so that it suits better the shape and properties of the dataset provided. \\
 
-\subsubsection*{Node Sequence Selection}
+\subsubsection*{Node Sequence Selection} \label{node_seq_sel}
 
-The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can use the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the influence relations for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
+The first step in the algorithm consists of establishing a node ordering for the input graph based on a chosen graph labelling function. In general, any reasonable graph labelling function would work for this sorting procedure. For instance, an artificial, independent of dataset knowledge approach, can use the betweenness centrality value of each node. However, given the insights into the provenance dataset, I chose to use the timestamp of the nodes for labelling purposes, as this would imply a more natural ordering and actually improve the overall results. \\
 
 Given this ordering, a subset of nodes is designated as the roots (Node Sequence) from where the actual receptive fields will be constructed. Specifically, each two consecutive picked roots from the sorted list of nodes are within a constant distance from each other. This distance ($s$) is called a stride. The aim is to construct the same $w$ number of receptive fields for each input graph as they will be provided as training/testing data for the convolutional neural network. Therefore, in case the number of nodes is not sufficient for building $w$ receptive fields, the algorithm creates all-zero receptive fields for padding purposes. \\
 
@@ -187,11 +233,17 @@ always ranked higher than $w$. This definition, illustrated in Figure \ref{norma
   \label{normalisation}
 \end{figure}
 
-One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary.
+One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary. In order to do so, and as suggested by the original paper of Patchy-San, I use pynauty, a python library which can be used to compare graphs for isomorphism and to determine their automorphism group. Pynauty accepts prior node partitions as input (the subgraph neighbourhoods labelled w.r.t. distance to root node) and breaks remaining ties by choosing the lexicographically maximal adjacency matrix). Due to the constant size k of the neighborhood graphs, the graph isomorphism algorithm runs in time polynomial in the size of the original graph and, on average, in time linear in k. \\ 
 
 \subsection{Convolutional Neural Network}
 
 For each input graph $G$, given the construction of the receptive fields, and the number of attributes of each vertex $a_v$, I compute an initial 3D tensor of sizes ($w$, $k$, $a_v$), which is afterwards reshaped to a 2D tensor ($wk$, $a_v$) and fed as input for the CNN (where, obviously, $a_v$ will be the number of input channels). \\
+
+The best CNN configuration that I found in my project consists of 7 layers. The input layer mentioned above. Two pairs of 1-dimensional convolutional and maxpooling layers after which the parameters are flattened. A fully connected layer and the output layer of probability distributions. The convolutional layers use 64 and 32 filters, respectively, while the pool size of the pooling layers is 2. \\
+
+After each of the pairs of convolutional and maxpooling, and also after the fully connected hidden layer, I add as regularisation techniques batch normalisation and dropout and as activation function ReLU. The output layer uses softmax activation function which returns the class probability distribution. \textit{He} model is used as the weights initialisation strategy, while weight decay at each hidden layer is used for penalising large weights. These layer-level operations can be visualised in Figure \ref{cnn_layers}. \\
+
+Finally, the optimisation algorithm used is Adam and the corresponding loss function is categorical crossentropy. Adam is a variation of gradient descent which leverages the power of adaptive learning rates methods to find individual learning rates for each parameter. An initial learning rate is still to be specified, but it alters and becomes less influential with each epoch depending on the parameter updated. This characteristic, combined with the fact that Adam only requires the computation of first-order gradients, usually makes it faster than other optimisers.  \\
 
 
 \begin{figure}[H]
@@ -204,9 +256,14 @@ For each input graph $G$, given the construction of the receptive fields, and th
 
 \section{Content Classification Pipeline}
 \subsection{Data Analysis and Processing}
+
+The content component of the project was chosen with a view to proving the concept of combining both content and context information for classification purposes. The novelty of the project stands mostly in the Patchy-San-CNN pipeline, hence the content will not aim for generalisation, but rather for creating a bases for showing that further extensions are not only available, but also feasible. Bearing this in mind, I decided to approach a subcategory of files that can be present in provenance graphs: log files. The log files dataset does not match the actual nodes in the graphs for one main reasons: the project in which the provenance dataset was constructed happened more than one year ago, hence I did not have access to the content of those files. \\
+
+Each log file in the dataset contains 100 lines of information. For each file, I concatenate all the lines in a single string and afterwards apply a couple of preprocessing to transform the string in numerical inputs for a NN. \\
+
 \subsubsection*{Feature Hashing}
 
-Feature hashing is a fast and space-efficient way of vectorising features. It works by converting unique tokens into integers. Specifically, by applying a hash function to the features and using their hash values as indices directly. It operates on the exact strings that one provides as input and does not perform any linguistic analysis or preprocessing. The advantage of using feature hashing is that text documents of variable-length can be represented as numeric feature vectors of equal-length. This achieves at the same time a numerical input appropriate for machine learning algorithms, and also dimensionality reduction. Another aspect worth mentioning is that, for instance, in tasks involving natural language, it possible that some misspelling ends up incrementing the same index as some legitimate word as it passes through the hash function, resulting in a collision. This scenario is highly unlikely in my project, where the input consists of raw log files. Moreover, increasing the hash space dimensionality makes probability of collisions negligeable.\\
+Feature hashing is a fast and space-efficient way of vectorising features. It works by converting unique tokens into integers. Specifically, by applying a hash function to the features and using their hash values as indices directly. It operates on the exact strings that one provides as input and does not perform any linguistic analysis or preprocessing. The advantage of using feature hashing is that text documents of variable-length, such as the involved log files, can be represented as numeric feature vectors of equal-length. This achieves at the same time a numerical input appropriate for machine learning algorithms, and also dimensionality reduction. Another aspect worth mentioning is that, for instance, in tasks involving natural language, it possible that some misspelling ends up incrementing the same index as some legitimate word as it passes through the hash function, resulting in a collision. This scenario is highly unlikely in my project, where the input consists of raw log files. Moreover, increasing the hash space dimensionality makes probability of collisions negligible.\\
 
 \subsubsection*{Feature Scaling}
 
@@ -221,6 +278,11 @@ shifted and rescaled so that they end up ranging between 0 and 1. It is done by 
 \end{equation}
 
 \subsection{Multilayer Perceptron}
+
+The best architecture that I found for MLP for the log files classification task is comprised of four layers. The input layer consists of over 1000 neurons (length of the feature vector). The first hidden layer performs a significant reduction in that it has only 128 neurons. This decision is based on the fact that each additional layer increases the number of parameters the network has to optimise by \textit{O(mn)} for a transition from \textit{m} to \textit{n} neurons. The second hidden layer performs an expansion, having 256 neurons, and is meant to combine the features travelling through the network. The output layer consists of 6 neurons, giving the probability distribution of the input file being in each of the 6 classes. Each layer computes the weighed sum of its inputs and adds the bias. These process can be visualised in Figure \ref{mlp_layers} \\
+
+In terms of regularisation techniques, I apply batch normalisation and dropout at each hidden layer, as well as early stopping monitoring validation loss, and He model for initialising weights. Best results were found for dropout values with k$_p$ around 0.4, 0.5. Moreover, just like the CNN, the MLP optimises the parameters using the Adam algorithm and the categorical crossentropy loss function with weight decay regularisation (Equation \ref{weight_decay}). The ReLU function was chosen as the activation function for the neurons in the hidden layers of MLP, while for the output layer softmax activation function returns the desired probability distribution. 
+
 \begin{figure}[H]
   \centering
   \centerline{\includegraphics[scale=0.6]{Images/mlp_layers.png}}
@@ -251,7 +313,7 @@ Logistic Regression is one of the most simple and commonly used Machine Learning
 
 where $\pi$ indicates the probability of an event, and $\beta_i$ are the regression coefficients associated with the reference group and the $X_i$ explanatory variables. \\
 
-In the multiclass case, in the settings of the project, the training algorithm uses the one-vs-all (OvA) scheme.
+In the multiclass case, in the settings of this project, the training algorithm uses the one-vs-all (OvA) scheme.
 Build N(N-1) classifiers (for N classes), one classifier to distinguish each pair of classes $i$ and $j$. Let f$_{ij}$ be the classifier where class $i$ were positive examples and class $j$ were negative. Note f$_{ji}$ $=$ -f$_{ij}$. Classify using:
 
 \begin{equation}
@@ -259,7 +321,7 @@ Build N(N-1) classifiers (for N classes), one classifier to distinguish each pai
     f(x) = \argmax_{i} \sum_{j} f_{ij}(x)
 \end{equation} 
 
-On the one hand, given of its efficient and straightforward nature, logistic regression doesn't require high computation power, it is easy to implement, easily interpretable and used widely by data analyst and scientist. On the other hand, logistic regression is not able to handle a large number of categorical features/variables. It is vulnerable to overfitting. Logistic regression will not perform well with independent variables that are not correlated to the target variable and are very similar or correlated to each other. However, none of this properties is present in our case where the input consists of prediction labels from the base classifiers. Therefore, logistic regression is an excellent choice for a meta-classifier. \\
+On the one hand, given of its efficient and straightforward nature, logistic regression doesn't require high computation power, it is easy to implement, easily interpretable and used widely by data analyst and scientist. On the other hand, logistic regression is not able to handle a large number of categorical features/variables. In these situations, it is vulnerable to overfitting. Logistic regression will not perform well with independent variables that are not correlated to the target variable and are very similar or correlated to each other. However, none of these properties are present in our case where the input consists of prediction labels from the base classifiers. Therefore, logistic regression is an excellent choice for a meta-classifier. \\
 
 \section{Nested Cross-Validation} \label{nested_cross_validation}
 
@@ -296,6 +358,10 @@ An outer CV procedure is performed to provide a performance estimate used to sel
 \end{figure}
 
 \section{Rule Based Renaming}
+
+\section{Repository Overview}
+
+The code repository is divided into three main modules: data processing and synthetic data generation, machine learning module and evaluation module. Table \ref{repo_overview} goes into further detail, explaining at a fine-grained level, which pieces of functionality from each module were written from scratch and which are based on powerful tools or libraries.  
 
 \section{Summary}
 

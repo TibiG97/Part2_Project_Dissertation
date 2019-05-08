@@ -1,12 +1,30 @@
 \begin{document}
     
     \chapter{Conclusions}
+    This dissertation presented the effort put in designing, implementing and evaluating a machine learning pipeline capable of combining both provenance data and content information in order to classify and rename files.
     
-
     \section{Achievements}
+    All the success criteria of this project have been achieved and exceeded. The results obtained with respect to the metrics established in the Evaluation section are promising. They conceptually prove that NNs can constitute a great approach when it comes to dealing with both graph and file content classifications.  Moreover, the comparative analysis performed in Section \ref{Evaluation Results} gave an exellent perpective on the performance of the different models implemented. The challenge raised by the sparsity of the dataset provided was also well overcome by generating appropriate synthetic datasets.
+    
     
     \section{Lessons Learnt}
-
+    It goes without saying that the theoretical knowledge that I had to familiarise myself with is of paramount importance in the field of Machine Learning. This was a topic that aroused my interest throughout the project, especially how algorithms can be deployed such that they replicate human-like capabilities. Hence successfully completing it brought myself a lot of satisfaction. \\
+    
+    However, I would like to highlight the experience gained in designing neural networks, as I have discovered that this is comprised of multiple stages, perhaps each equally important. It starts with a challenging data processing and feature engineering step, that might require very complex algorithms such as Patchy-San which transforms raw graphs into suitable input for NNs. It continues with an iterative process of choosing an actual architecture for a NN, applying various regularisation techniques and tuning hyperparamenters. All of these become especially difficult as there is no given recipe which works under every circumstance. Each task is different in itself and requires time and inspection of different strategies on all the described stages. \\
+    
+    If I were to start the project again, I would have allowed more time on the content side of the pipeline. I would have tried to explore how to design appropriate features for different types of files, and respectively, on other methods of combining them with features extracted from the provenance graphs. \\ 
+    
     \section{Further Work}
+    
+    Working on this project was an invaluable practice from the perspective of a future computer scientist, still inexperienced in the software development field. Although strong results were achieved, there is still space for very intriguing questions. With a view to answering some of them, the following further extensions could be implemented:
+    
+    \begin{itemize}
+        \item \textit{Exploring different NN architectures}: many novel architectures such as Graph Attention Networks, Graph Convolutional Networks and Variational Recurrent Networks have shown promising results in the research field. It would make a great extension running a comparative between some of them and the Patchy-San-CNN pipeline.
+        
+        \item \textit{Evaluate the context classification algorithm on real data}: check whether the L2$_{distance}$ assumption when generating the node properties' distributions does actually match real data properties. 
+        
+        \item \textit{Implement ML models that can predict user's renaming strategies:} go a step further then doing standard rule-based renaming. A ML model could perhaps learn the methods in which a user chooses to rename the files and relate them with the currently obtained classification.    
+    
+    \end{itemize}
     
 \end{document}
