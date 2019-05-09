@@ -15,7 +15,7 @@ The basic unit of computation in a NN is the Artificial Neuron. A neuron receive
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale = 0.5]{Images/artificial_neuron.png}
+  \includegraphics[scale = 0.35]{Images/artificial_neuron.png}
   \caption{Artificial Neuron Structure.}
   \label{Artificial Neuron}
 \end{figure}
@@ -42,13 +42,13 @@ The purpose of an activation function is to introduce non-linearity into a NN, i
 
 \subsection{Multilayer Perceptron}
 
-A Multilayer Perceptron (MLP) is a finite, directed, acyclic graph in which the nodes represent artificial neurons and they are arranged in at least three layers. Nodes that are no target of any connection are called input neurons and represent input features. Nodes that are no source of any connection are called output neurons and represent predictions for the possible classes. Nodes that are neither input nor output neurons are called hidden neurons. The organisation of nodes in layers implies that nodes belonging to layer $i$ in the MLP serve as input features for nodes in layer $i+1$. \\
+A Multilayer Perceptron (MLP) is a finite, directed, acyclic graph in which the nodes represent artificial neurons and they are arranged in at least three layers. Nodes that are no target of any connection are called input neurons and represent input features. Nodes that are no source of any connection are called output neurons and represent predictions for the possible classes. Nodes that are neither input nor output neurons are called hidden neurons. The organisation of nodes in layers implies that nodes belonging to layer $i$ in the MLP serve as input features for nodes in layer $i+1$. The most distinctive feature of MLPs is that they are fully connected NNs: each node in layer $i$ is connected to each node in layer $i+1$. \\
 
-The most distinctive feature of MLPs is that they are fully connected NNs: each node in layer $i$ is connected to each node in layer $i+1$.
+Togheter with a couple of data processing techniques, a MLP will form the content classification component of the implemented ML pipeline. \\
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale = 0.5]{Images/mlp.png}
+  \includegraphics[scale = 0.35]{Images/mlp.png}
   \caption{Multilayer Perceptron Structure.}
   \label{Multilayer Perceptron}
 \end{figure}
@@ -65,7 +65,7 @@ Convolution is a specialised type of linear operation used for feature extractio
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale = 0.6]{Images/convolution.png}
+  \includegraphics[scale = 0.475]{Images/convolution.png}
   \caption{Example of a Convolution operation where coloured areas of the input matrix are successively dot producted with the flipped kernel.}
   \label{Convolution}
 \end{figure}
@@ -88,7 +88,7 @@ Pooling is a procedure that reduces the input over a certain area to a single va
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.3]{Images/pooling.png}
+  \includegraphics[scale=0.25]{Images/pooling.png}
   \caption{Example of Max Pooling operation with 2 by 2 kernel size and stride 2.}
   \label{Pooling}
 \end{figure}
@@ -96,6 +96,8 @@ Pooling is a procedure that reduces the input over a certain area to a single va
 \subsubsection*{Fully Connected Layers}
 
 After several convolution and pooling layers, the CNN usually ends with multiple fully connected layers. The output from the convolutional and pooling layers represent high-level features of the input image. The purpose of the dense layers is to use these flattened features for classifying the input image into various classes based on the training dataset. \\
+
+Together with the Patchy-San algorithm for transforming raw graphs into suitable input, described in detail in Section \ref{PCSN}, a CNN will form the context classification component of the implemented ML pipeline. \\
 
 \subsection{Supervised Learning using Neural Networks}
 
@@ -123,14 +125,7 @@ The training stage starts by randomly initialising the weights and biases of the
 
 \bigskip
 
-An important parameter in Gradient Descent is the size of the steps, determined by the learning rate hyperparameter. If the learning rate is too small, then the algorithm will have to go through many iterations to converge, which will take a long time (LHS of Figure \ref{learnrate}). On the other hand, it the learning rate is too high, this might cause the algorithm to diverge, never reaching the intended minimum, loss function values becoming greater and greater (RHS of Figure \ref{learnrate}). \\
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale = 0.5]{Images/learningrate.png}
-  \caption{Gradient Descent behaviour depending on learning rate.}
-  \label{learnrate}
-\end{figure}
+An important parameter in Gradient Descent is the size of the steps, determined by the learning rate hyperparameter. If the learning rate is too small, then the algorithm will have to go through many iterations to converge, which will take a long time. On the other hand, it the learning rate is too high, this might cause the algorithm to diverge, never reaching the intended minimum, loss function values becoming greater and greater. \\
 
 
 
@@ -147,8 +142,6 @@ A trained model used on unseen data returns a prediction y. This can be used to 
 \end{equation}
 
 \smallskip
-
-\section{Introduction to Patchy-San}
 
 \section{Baseline Models}
 

@@ -146,6 +146,7 @@
 
 \pagestyle{plain}
 \newpage
+\vspace*{35mm}
 
 \section*{Declaration of Originality}
 I, Tiberiu-George Copaciu of Homerton College,
@@ -171,28 +172,33 @@ I would like to express my deepest appreciation to my supervisor, Dr Lucian Cara
 
 \newpage
 
+
 \chapter*{Proforma}
 
 {\large
   \begin{tabular}{ll}
-    Name:               & \bf Tiberiu-George Copaciu                          \\
-    College:            & \bf Homerton College                                \\
+    Candidate Number:   & \bf 2347C                          \\
     Project Title:      & \bf Descriptive file names from content and context \\
     Examination:        & \bf Computer Science Tripos -- Part II, July 2019   \\
     Word Count:         & \bf $\mathbf{0}$\footnotemark[1]                    \\
+    Final Line Count:   & \bf $\mathbf{0}$\footnotemark[2]                    \\
     Project Originator: & Dr Lucian Carata                                    \\
-    Supervisor:         & Dr Lucian Carata                                    \\
+    Project Supervisor: & Dr Lucian Carata                                    \\
   \end{tabular}
 }
+
 
 \footnotetext[1]{This word count was computed
   using TexCount: \url{https://app.uio.no/ifi/texcount/}}
 
+\footnotetext[2]{This line count was computed manually by the student}
+
 \section*{Original aims of the project}
 
-This project aims to give a solution to the problem of files created either by users or processes which end up having unintuitive/non-descriptive names. Thus, the core goal of the project was to implement a machine learning pipeline capable of classifying files in terms of their content and context (graphs representing provenance data) information. Afterwards, using this results and a user-given policy, the project should rename/reorganise files and present them to the user into a virtual filesystem.
+The original aim of the project was to give a solution to the problem of files created either by users or processes which end up having unintuitive or non-descriptive names. The core goal of the project was to implement a machine learning pipeline capable of classifying files in terms of both their content and context (graphs representing provenance data) information. Afterwards, using these results and a user-given policy, the project should suggest a way of renaming files and firstly present it to the user (as opposed to directly intervening to them).
 
 \section*{Work completed}
+I have implemented a ML pipeline comprised of four main components: a content classification pipeline (for which I use a novel graph classification algorithm alongside a convolutional neural network), a log files content classification pipeline (for which I use a couple of preprocessing techniques alongside a multilayer perceptron), a stacked ensemble classifier (a meta-classifier which combines the predictions from the previous two in order to return the final, overall, predictions) and a rule based renaming procedure. As an extension, I use two off-the-shelf implementations of popular classifiers, as baselines for my context classification pipeline in a comparative analysis. 
 
 \section*{Special Difficulties}
 None.
@@ -210,11 +216,13 @@ None.
 \include{TexFiles/implementation}
 \include{TexFiles/evaluation}
 \include{TexFiles/conclusions}
-\appendix
-% \include{TexFiles/project_proposal}
 
 \addcontentsline{toc}{chapter}{Bibliography}
 \bibliography{refs}
 \nocite{pnn, polonium, pnn-parallel, sigmoidal, nonlinearities, DBLP:journals/corr/LuongPM15, 7266837, 2017arXiv171010903V, 279181, DBLP:journals/corr/KingmaB14, DBLP:journals/corr/VaswaniSPUJGKP17, REST-general, chollet2015keras, DBLP:journals/corr/IoffeS15, Rutkowski2004}
+
+\appendix
+\include{TexFiles/appendixA}
+\include{TexFiles/project_proposal}
 
 \end{document}
