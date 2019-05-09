@@ -46,19 +46,19 @@ Therefore, the most common metrics are: \\
 
 \begin{itemize}
   \item \textbf{Accuracy} (what \% of predictions were correct): $$ \cfrac{\text{number of corect predictions}}{\text{total number of predictions made}} = \cfrac{TP + TN}{TP + TN + FP + FN}$$ \\
-        Probably the most straightforward and intuitive metric for classifier performance. However, it is misleading when confronted with class imbalance problem. \\
+        Probably the most straightforward and intuitive metric for classifier performance. It is misleading when confronted with class imbalance problem, but for this project it is not the case. Hence, accuracy is an appropriate measure to estimate the performance of the models. \\
 
   \item \textbf{Precision} (what \% of positive predictions were correct): $$ \cfrac{TP}{TP + FP}$$
         In the context of fraud detection, it is usually more costly to miss a positive instance than to falsely label a negative instance. Hence, we are concerned with precision rather than recall. \\
 
   \item \textbf{Recall} (what \% of positive cases did model catch): $$ \cfrac{TP}{TP + FN}$$ \\
-        In situations where you want to detect instances of a minority class, you are usually concerned more with recall than precision. \\
+        In situations where you want to detect instances of a minority class, one is usually concerned more with recall than precision. As stated in the Introduction, files' non-descriptive names might come as a result of intentional, adversarial, interaction with the file system, hence the interest in a great recall score.\\
 
   \item \textbf{F1 score} (weighted average of precision and recall): $$ \cfrac{2(\text{precision} \ * \ \text{recall})}{\text{precision} \ + \ \text{recall}} = \cfrac{2TP}{2TP + FP + FN}$$ \\
         As all of the metrics above, F1 score takes values between 0 and 1, higher values indicating better performance. In fact, higher values of F1 score indicate better balance between precision and recall. \\
 
   \item \textbf{Matthew's Correlation Coefficient (MCC)} $$ \cfrac{TP * TN - FP * FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}}$$ \\
-        Unlike the other metrics discussed above, MCC takes all the cells of the Confusion Matrix into consideration in its formula, hence behaves the best in case of imbalanced classes. The range of values of MCC lie between -1 to +1. A model with a score of +1 is a perfect model and -1 is a poor model, while a score of 0 is a as good as a random model. This property is one of the key usefulness of MCC as it leads to easy interpretability. \\
+        Unlike the other metrics discussed above, MCC takes all the cells of the Confusion Matrix into consideration in its formula, hence behaves the best in case of imbalanced classes. The range of values of MCC lie between -1 to +1. A model with a score of +1 is a perfect model and -1 is a poor model, while a score of 0 is a as good as a random model. Although not facing the class imbalance problem, MCC would still make an excellent estimator for the overall performance of the ML models.\\
 \end{itemize}
 
 \subsubsection*{Metrics for MultiClass Classification}
@@ -84,7 +84,7 @@ Let TP$_i$, TN$_i$, FP$_i$, FN$_i$ be the number of true positives, true negativ
         A macro-average will compute the metric independently for each class and then take the average (hence treating all classes equally).
 \end{itemize}
 
-The evaluation will be conducted on balanced datasets, hence there is little difference expected between micro and macro averaging results and in the upcoming sections I will only report only in terms of macro averaging. \\
+The evaluation will be conducted on balanced datasets, hence there is little difference expected between micro and macro averaging results and in the upcoming sections, I will report only in terms of macro averaging. \\
 
 
 \subsection{Monte Carlo Permutation Test}
@@ -141,7 +141,9 @@ I say that a set of distributions are in range [0, K] when the greatest L2$_{\te
   \label{l2_dist}
 \end{figure}
 
-Given the results of the first two experiments, all of the following evaluations were conducted on synthetic graphs with ID = 3 and HD = 4, while node probability distributions were in range [0, 0.2] (way more restrictive than in the real dataset). \\
+Given the results of the first two experiments, all of the following evaluations were conducted on 3000 log files and 3000 synthetic graphs with ID = 3 and HD = 4, uniformly split into 6 classes. Node probability distributions were in range [0, 0.2] (way more restrictive than in the real dataset). \\
+
+By obtaining the highest metrics in each section, as shown in Table \ref{results}, CNN outperforms Random Forest and KNN in the graph classification task, on this specific dataset. These results were expected, as all the complex preprocessing executed by the Patchy-San algorithm was meant to exploit structural properties of the graphs (aspect that none of the baseline models takes into account). However, given the outcomes of the permutation test (Table \ref{p_values}), there is a statistically significant difference only between CNN and KNN, whereas between CNN and Random Forest the probability that the results were obtained by chance is above the 0.01 established threshold, hence the Null Hypothesis cannot be rejected. \\
 
 \begin{longtable}{|p{.185\textwidth}|p{.15\textwidth}|p{.15\textwidth}|p{.15\textwidth}|p{.15\textwidth}|p{.15\textwidth}|}
   \hline
@@ -165,9 +167,7 @@ Given the results of the first two experiments, all of the following evaluations
   \label{results}
 \end{longtable}
 
-By obtaining the highest metrics in each section, as shown in Table \ref{results}, CNN outperforms Random Forest and KNN in the graph classification task, on this specific dataset. These results were expected, as all the complex preprocessing executed by the Patchy-San algorithm was meant to exploit structural properties of the graphs (aspect that none of the baseline models takes into account). However, given the outcomes of the permutation test (Table \ref{p_values}), there is a statistically significant difference only between CNN and KNN, whereas between CNN and Random Forest the probability that the results were obtained by chance is above the 0.01 established threshold, hence the Null Hypothesis cannot be rejected. \\
-
-The second highest metrics in each sections were achieved by the MLP. This reveals that the content classification module was also a success, having great balance between precision and recall. The intriguing results are those of the permutation test, which suggest that MLP is statistically significantly different from all the other models. This means that the model outperforms KNN, RF and the stacked ensemble, while being outperformed by CNN. The fact that MLP is trained and tested on differently structured information should not matter for this result, as p$\_$values are only computed w.r.t. the output labels. One case in which MLP does show slightly undesirable results can be observed in Figure \ref{mlp_train_test}. On every outer fold of the NCV, when training the MLP, it rapidly converges to perfect accuracy. Contrary, while testing the MLP, although it achieves great accuracy scores just as fast as when training, there is a some variation as epochs are passing. Specifically, the accuracy oscillates up and down, roughly in a 0.1 range. These might suggest that, despite the regularisation techniques applied, some of the hyperparameters were overfitted on the training set.\\
+The second highest metrics in each sections were achieved by the MLP. This reveals that the content classification module was also a success, having great balance between precision and recall. The intriguing results are those of the permutation test, which suggest that MLP is statistically significantly different from all the other models. This means that the model outperforms KNN, RF and the stacked ensemble, while being outperformed by CNN. The fact that MLP is trained and tested on differently structured information should not matter for this result, as p-values are only computed w.r.t. the output labels. One case in which MLP does show slightly undesirable results can be observed in Figure \ref{mlp_train_test}. On every outer fold of the NCV, when training the MLP, it rapidly converges to perfect accuracy. Contrary, while testing the MLP, although it achieves great accuracy scores just as fast as when training, there is some variation as epochs are passing. Specifically, the accuracy oscillates up and down, roughly in a 0.1 range. These might suggest that, despite the regularisation techniques applied, some of the hyperparameters were overfitted on the training set.\\
 
 \begin{figure}[H]
   \centering
