@@ -45,7 +45,7 @@ Deep NNs can be trained to develop complex relationships between their input dat
 
 \subsection{Dropout}
 
-Dropout is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $k_p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
+Dropout$^{\small \cite{dropout}}$ is a regularisation technique behaving in the following manner: on each training iteration, a randomly chosen subset of neurons in the NN are shut down, in the sense that the NN will perform forward propagation and back-propagation as if those nodes (alongside with their inwards and outwards edges) are not preset at all. Since the units that are dropped out in each iteration are random, this forces the learning algorithm to spread out the weights and not focus on some specific features. This procedure can be visualised in Figure \ref{dropout}. In the simplest case, each unit is retained with a fixed probability $k_p$ independent of other units, which is introduced as a new hyperparameter in the NN. \\
 
 One important aspect to note is that the weights of the network will be larger than normal because of dropout. Thus, if a unit is retained with probability $k_p$ during training, the outgoing weights of that unit are multiplied by $k_p$ at test
 time. Another approach is to re-scale weights at training time instead, after each weight update at the end of the mini-batch. This is sometimes called inverse dropout and is the way both Keras and Pytorch deep learning libraries implement it. \\
@@ -70,7 +70,7 @@ time. Another approach is to re-scale weights at training time instead, after ea
 \subsection{Batch Normalisation}
 
 
-One of the key motivations for the development of Batch Normalisation was the reduction of so-called internal covariate shift (ICS). ICS is the phenomenon wherein the distribution of inputs to a layer in the NN changes due to an update of parameters in the previous layers. This change leads to a constant shift of the underlying training problem and is thus believe to have detrimental effect on the training process. \\
+One of the key motivations for the development of Batch Normalisation$^{\small \cite{batchnorm}}$ was the reduction of so-called internal covariate shift (ICS). ICS is the phenomenon wherein the distribution of inputs to a layer in the NN changes due to an update of parameters in the previous layers. This change leads to a constant shift of the underlying training problem and is thus believe to have detrimental effect on the training process. \\
 
 Therefore, Batch Normalisation is a mechanism that aims to stabilise the distribution (over a mini-batch) of inputs \{$x_1$, $x_2$, ... , $x_n$\} to a given NN during training. This is achieved by augmenting the NN with additional layers that set the first two moments: mean - $\mu = \frac{1}{n} \sum_{i=1}^n x_i$ and variance - $\sigma = \sqrt{\frac{1}{n} \sum_{i=1}^n (x_i - \mu) ^ 2}$, of the distribution of each activation to be zero and one respectively. Thus, it normalises the inputs in the following manner: \\
 
@@ -89,7 +89,7 @@ Then, the batch normalised inputs are also typically scaled and shifted based on
 \end{equation}
 
 \subsection{Weight Decay}
-Weight decay is a standard trick to improve the generalisation performance of neural
+Weight decay$^{\small \cite{weight_decay}}$ is a standard trick to improve the generalisation performance of neural
 networks by constraining the weights to be small in magnitude and penalising large weights. Specifically, weight decay is defined as multiplying each weight in the gradient descent at each epoch by a factor $\lambda$ smaller than one and greater than zero. This technique is equivalent to introducing an L2 regularisation term to the loss function that one wants to optimise. Therefore, the updated loss functions will be of the following form: \\
 
 \begin{equation} \label{weight_decay}
@@ -120,7 +120,7 @@ One very popular initialisation strategy is called Xavier/Glorot initialisation.
 
 where $n_{in}$ is the number of neurons which serve as input for the layer to which the weight belongs. \\
 
-Glorot initialisation works well for sigmoid and tanh activations, as has been proved in various experiments presented in \textit{Understanding the difficulty of training deep feedforward neural networks}. However, since ReLU zeroes out negative inputs, it roughly removes half the variance. Illustration of the mentioned activation functions can be seen in Figure \ref{activation_functions}. \textit{He et al.(2015)} conducted further experiments on this topic discovering that this is easily amended by multiplying one of our conditions above by two, hence obtaining the He initialisation (which is thus my choice for both implemented NN architectures) :
+Glorot initialisation works well for sigmoid and tanh activations, as has been proved in various experiments presented in \textit{Understanding the difficulty of training deep feedforward neural networks}$^{\small \cite{xavier}}$. However, since ReLU zeroes out negative inputs, it roughly removes half the variance. Illustration of the mentioned activation functions can be seen in Figure \ref{activation_functions}. \textit{He et al.(2015)}$^{\small \cite{he}}$ conducted further experiments on this topic discovering that this is easily amended by multiplying one of our conditions above by two, hence obtaining the He initialisation (which is thus my choice for both implemented NN architectures) :
 
 \begin{equation}
   \centering
@@ -233,7 +233,7 @@ always ranked higher than $w$. This definition, illustrated in Figure \ref{norma
   \label{normalisation}
 \end{figure}
 
-One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary. In order to do so, and as suggested by the original paper of Patchy-San, I use pynauty, a python library which can be used to compare graphs for isomorphism and to determine their automorphism group. Pynauty accepts prior node partitions as input (the subgraph neighbourhoods labelled w.r.t. distance to root node) and breaks remaining ties by choosing the lexicographically maximal adjacency matrix). Due to the constant size k of the neighborhood graphs, the graph isomorphism algorithm runs in time polynomial in the size of the original graph and, on average, in time linear in k. \\ 
+One important detail that was taken into account is that, in general, the described labelling procedure does not consist of an injective function, thus a method to break ties between same-labelled nodes is necessary. In order to do so, and as suggested by the original paper of Patchy-San, I use pynauty, a python library which can be used to compare graphs for isomorphism and to determine their automorphism group. Pynauty$^{\small \cite{pynauty}}$ accepts prior node partitions as input (the subgraph neighbourhoods labelled w.r.t. distance to root node) and breaks remaining ties by choosing the lexicographically maximal adjacency matrix). Due to the constant size k of the neighborhood graphs, the graph isomorphism algorithm runs in time polynomial in the size of the original graph and, on average, in time linear in k. $^{\small \cite{timing_props}}$ \\ 
 
 \subsection{Convolutional Neural Network}
 
@@ -243,7 +243,7 @@ The best CNN configuration that I found in my project consists of 7 layers. The 
 
 After each of the pairs of convolutional and maxpooling, and also after the fully connected hidden layer, I add as regularisation techniques batch normalisation and dropout and as activation function ReLU. The output layer uses softmax activation function which returns the class probability distribution. \textit{He} model is used as the weights initialisation strategy, while weight decay at each hidden layer is used for penalising large weights. These layer-level operations can be visualised in Figure \ref{cnn_layers}. \\
 
-Finally, the optimisation algorithm used is Adam and the corresponding loss function is categorical crossentropy. Adam is a variation of gradient descent which leverages the power of adaptive learning rates methods to find individual learning rates for each parameter. An initial learning rate is still to be specified, but it alters and becomes less influential with each epoch depending on the parameter updated. This characteristic, combined with the fact that Adam only requires the computation of first-order gradients, usually makes it faster than other optimisers.  \\
+Finally, the optimisation algorithm used is Adam$^{\small \cite{ADAM}}$ and the corresponding loss function is categorical crossentropy. Adam is a variation of gradient descent which leverages the power of adaptive learning rates methods to find individual learning rates for each parameter. An initial learning rate is still to be specified, but it alters and becomes less influential with each epoch depending on the parameter updated. This characteristic, combined with the fact that Adam only requires the computation of first-order gradients, usually makes it faster than other optimisers.  \\
 
 
 \begin{figure}[H]
@@ -263,7 +263,7 @@ Each log file in the dataset contains 100 lines of information. For each file, I
 
 \subsubsection*{Feature Hashing}
 
-Feature hashing is a fast and space-efficient way of vectorising features. It works by converting unique tokens into integers. Specifically, by applying a hash function to the features and using their hash values as indices directly. It operates on the exact strings that one provides as input and does not perform any linguistic analysis or preprocessing. The advantage of using feature hashing is that text documents of variable-length, such as the involved log files, can be represented as numeric feature vectors of equal-length. This achieves at the same time a numerical input appropriate for machine learning algorithms, and also dimensionality reduction. Another aspect worth mentioning is that, for instance, in tasks involving natural language, it possible that some misspelling ends up incrementing the same index as some legitimate word as it passes through the hash function, resulting in a collision. This scenario is highly unlikely in my project, where the input consists of raw log files. Moreover, increasing the hash space dimensionality makes probability of collisions negligible.\\
+Feature hashing$^{\small \cite{hashing_trick}}$ is a fast and space-efficient way of vectorising features. It works by converting unique tokens into integers. Specifically, by applying a hash function to the features and using their hash values as indices directly. It operates on the exact strings that one provides as input and does not perform any linguistic analysis or preprocessing. The advantage of using feature hashing is that text documents of variable-length, such as the involved log files, can be represented as numeric feature vectors of equal-length. This achieves at the same time a numerical input appropriate for machine learning algorithms, and also dimensionality reduction. Another aspect worth mentioning is that, for instance, in tasks involving natural language, it possible that some misspelling ends up incrementing the same index as some legitimate word as it passes through the hash function, resulting in a collision. This scenario is highly unlikely in my project, where the input consists of raw log files. Moreover, increasing the hash space dimensionality makes probability of collisions negligible.\\
 
 \subsubsection*{Feature Scaling}
 
@@ -297,7 +297,7 @@ A successful approach to reducing the variance of neural network models is to tr
 
 \subsection{Stacking}
 
-Stacking is an ensemble learning technique that combines multiple classification (or regression) models via a meta-classifier or a (meta-regressor). The base level models are trained based on a complete training set, then the meta-model is trained on the outputs of the base level models as features. The main aspect that makes this technique suitable for my project is that, in comparison with other ensemble learning methods (such as Bagging or Boosting), the base level of Stacking often consists of different learning algorithms. This makes possible combining the context and content features, which is at the core of the project.\\
+Stacking is an ensemble learning technique that combines multiple classification (or regression) models via a meta-classifier or a (meta-regressor). The base level models are trained based on a complete training set, then the meta-model is trained on the outputs of the base level models as features. The main aspect that makes this technique suitable for my project is that, in comparison with other ensemble learning methods (such as Bagging or Boosting$^{\small \cite{ensemble}}$), the base level of Stacking often consists of different learning algorithms. This makes possible combining the context and content features, which is at the core of the project.\\
 
 In my implementation, I run a Nested Cross-Validation (described in Section \ref{nested_cross_validation}) over both CNN and MLP, and I concatenate their best predictions (i.e. predictions achieving highest accuracy score) over all ten outer folds, say $\{$CNN$_1$, CNN$_2$, ..., CNN$_N$$\}$ and $\{$MLP$_1$, MLP$_2$, ..., MLP$_N$$\}$ where N is the size of the files dataset. 
 Afterwards I use a dataset obtained from pairing predictions from the two classifiers $\{$(CNN$_1$, MLP$_1$), (CNN$_2$, MLP$_2$), ..., (CNN$_N$, MLP$_N$)$\}$ and the original true labels for conducting a regular Cross-Validation on a meta-classifier. The outputs of the meta-classifier are regarded as the overall predictions of the entire implemented machine learning pipeline. My choice for a meta-classifier is Logistic Regression. \\
@@ -325,7 +325,7 @@ On the one hand, given of its efficient and straightforward nature, logistic reg
 
 \section{Nested Cross-Validation} \label{nested_cross_validation}
 
-The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance data. In order to deal with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV) procedure. A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
+The fundamental success criteria of the project were to develop, tune and evaluate a ML pipeline capable of classifying files in term of both content and provenance data. In order to deal with the second and third mentioned goals, I have implemented a Nested Cross-Validation (CV) procedure$^{\small \cite{nested_cross_validation}}$. A detailed description of how it is performed follows and an expressive visualisation of it can be observed in Figure \ref{NestedCV}. \bigskip
 
 \begin{itemize}[label={}]
   \item \textbf{Step 1.} divide the dataset into K stratified cross-validation folds at random
