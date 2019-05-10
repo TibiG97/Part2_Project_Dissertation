@@ -171,7 +171,7 @@ Glorot initialisation works well for sigmoid and tanh activations, as has been p
 This section briefly presents the theoretical background behind the classification models for which off-the-shelf implementations were used, serving as baselines for the context classification pipeline architecture. 
 
 \subsection{K-Nearest Neighbours Classifier}
-Many classification approaches attempt to estimate the conditional distribution of Y (output probabilities) given X (input features), and then classify a given observation to the class with highest estimated probability. One such method is the K-nearest neighbors (KNN) classifier$^{\small \cite{KNN}}$. Given a positive integer K and a test observation x$_0$, the KNN classifier first identifies the neighbouring K points in the training data that are closest to x$_0$, represented by N$_0$. It then estimates the conditional probability for class $j$ as the fraction of points in N$_0$ whose response values equal $j$:
+Many classification approaches attempt to estimate the conditional distribution of Y (output probabilities) given X (input features), and then classify a given observation to the class with highest estimated probability. One such method is the K-nearest neighbors (KNN)$^{\small \cite{KNN}}$ classifier. Given a positive integer K and a test observation x$_0$, the KNN classifier first identifies the neighbouring K points in the training data that are closest to x$_0$, represented by N$_0$. It then estimates the conditional probability for class $j$ as the fraction of points in N$_0$ whose response values equal $j$:
 
 \begin{equation}
     Pr(Y = j|X = x_0) = \frac{1}{K} \sum_{i \in N_0} I(y_i = j)

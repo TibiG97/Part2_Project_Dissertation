@@ -2,7 +2,9 @@
 
 \chapter{Evaluation}
 
-This chapter revisits the success criteria, explaining how they were achieved and exceeded. It firstly introduces popular methodologies for evaluating classification models and then presents and discusses the results obtained on synthetically generated datasets (defined in Section \ref{Synthetic Data Generation}). Moreover, how a comparative analysis between the implemented models is conducted, is explained in Section \ref{Evaluation Results} . Finally, timing performances of the main pipeline, in simulated real-world conditions, are presented. 
+This chapter revisits the success criteria, explaining how they were achieved and exceeded. It firstly introduces popular methodologies for evaluating classification models and then presents and discusses the results obtained on synthetically generated datasets (defined in Section \ref{Synthetic Data Generation}). Moreover, how a comparative analysis between the implemented models is conducted, is explained in Section \ref{monte carlo} . 
+
+%Finally, timing performances of the main pipeline, in simulated real-world conditions, are presented.% 
 
 \section{Success Criteria}
 
@@ -87,7 +89,7 @@ Let TP$_i$, TN$_i$, FP$_i$, FN$_i$ be the number of true positives, true negativ
 The evaluation will be conducted on balanced datasets, hence there is little difference expected between micro and macro averaging results and in the upcoming sections, I will report only in terms of macro averaging. 
 
 
-\subsection{Monte Carlo Permutation Test}
+\subsection{Monte Carlo Permutation Test} \label{monte carlo}
 
 In order to comparatively evaluate any two models implemented, I use the \textbf{permutation} \textbf{test}$^{\small \cite{permutation_test}}$ for paired samples. The permutation test checks whether the population mean of the two conditions is different (H$_1$) or the same (H$_0$). The power of the permutation test is defined as 1 - $\alpha$ where:
 
@@ -111,7 +113,7 @@ I decide that two sets of predictions come from different distributions for p-va
 \section{Evaluation Results and Discussions} \label{Evaluation Results}
 
 The synthetic graphs for the first experiment conducted were generated using node properties and node degree distributions extracted from the real dataset. The experiment aimed to determine how the Patchy-San CNN pipeline performs depending on the Interaction Depth (ID) and History Depth (HD) parameters of the synthetic graphs. The NN used in this case was not tuned in any way, hyperparamer values being picked from popular choices in the research field. Figure \ref{inter_hist_depth_acc} highlights that cases in which: 
-(a) only processes that directly interact with multiple versions of a file are considered(i.e. ID = 1) or (b) only processes that interact with a single version of a file, in one or multiple hops are considered (i.e. HD = 1). In both scenarios the dimensions of the provenance subgraphs for each node increases considerably before the NN can overcome the 0.9 accuracy threshold. In contrast, using both history and interaction dimensions achieves perfect accuracy much easier, for instance, on graphs where ID = 3 and HD = 4. Therefore, using both higher order ancestors and past information is of paramount importance when selecting the provenance graph for a specific file. 
+(a) only processes that directly interact with multiple versions of a file are considered (i.e. ID = 1) or (b) only processes that interact with a single version of a file, in one or multiple hops are considered (i.e. HD = 1). In both scenarios the dimensions of the provenance subgraphs for each node increases considerably before the NN can overcome the 0.9 accuracy threshold. In contrast, using both history and interaction dimensions achieves perfect accuracy much easier, for instance, on graphs where ID = 3 and HD = 4. Therefore, using both higher order ancestors and past information is of paramount importance when selecting the provenance graph for a specific file. 
 
 
 \begin{figure}[H]
